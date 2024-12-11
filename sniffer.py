@@ -55,64 +55,35 @@ class WebSocket(Packet):
                                                       pkt.length))
                 ]
   
-
   def guess_payload_class(self, payload):
-    #print("entered")
     if 'HTTP' in payload: return http.HTTPRequest
     elif isinstance(self.underlayer, TCP):
-      #print("got here")
       return WebSocket
     else:
       return Packet.guess_payload_class(self, payload)
-
+  
   def post_dissection(self, pkt):
     if(pkt.mask_flag == 1 and pkt.frame_data is not None):
-      #print('here <%x>' % pkt.mask)
-      #print('watch this')
-      demask_array = [pkt.mask >> 24 & 0xff, pkt.mask >> 16 & 0xff, pkt.mask >> 8 & 0xff, pkt.mask & 0xff]
-      #print('got it')
-      #print(demask_array)
-      demask = array.array('I', demask_array)
-      #print('there')
+      demask = array.array('I', [pkt.mask >> 24 & 0xff, pkt.mask >> 16 & 0xff, pkt.mask >> 8 & 0xff, pkt.mask & 0xff])
       unmasked = ''
-      #print('where')
       for i, c in enumerate(pkt.frame_data):
-        #print(i, c)
-        #print(type(i), type(c))
-        #x = ord(c)
-        #print('then')
-        #print('now')
         unmasked += chr(c ^ (demask[i % 4]))
-        #print(res)
-        #print('gottem')
-        #print(unmasked)
-        #print('oops')
-      #print('everywhere')
       pkt.frame_data = unmasked
-      print('succ: %s' % unmasked)
       return pkt
     else:
-      print('fail')
       pass
 
 #bind_layers(TCP, http.HTTPRequest, dport=8180)
 bind_layers(TCP, WebSocket, dport=8180)
 
-def parse(pkt): return pkt.show()
-def parse2(pkt): 
-    raw = "ajsv" if not pkt.haslayer(Raw) else pkt[Raw]
-    return pkt.sprintf("%IP.src% -> %IP.dst%")
-def ws_parse(pkt):
-    if Raw in pkt: log(pkt[Raw].show())
-    #return WebSocket(bytes(pkt)).show()
-
-def detect_http_get(packet):
-    if packet.haslayer(TCP) and packet.haslayer(Raw):
-        http_data = packet[Raw].load.decode('utf-8', 'ignore')
-        if "GET" in http_data:
-            if UPGRADE_REGEX.findall(http_data):
-                key = WS_KEY_REGEX.findall(http_data)[0]
-                log("Sniffed websocket key %s" % key)
+def parse(pkt):
+    ws_str = "WebSocket" if pkt.haslayer(WebSocket) else ""
+    print(pkt.sprintf("Sniffed message: %IP.src%:%IP.sport%->%IP.dst%:%IP.dport%\t" + ws_str))
+    if ws_str != "": print('\t%s' % pkt[WebSocket].frame_data)
+    http_str = ""
+    if pkt.haslayer(Raw):
+        if b'HTTP' in pkt[Raw].load: 
+            print('\t%s' % http.HTTPRequest(pkt[Raw].load))
 
 def main():
     sniff(iface="lo", filter="port 8180", prn=parse, store=False)
