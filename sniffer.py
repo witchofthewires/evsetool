@@ -73,8 +73,8 @@ class WebSocket(Packet):
     else:
       pass
 
-#bind_layers(TCP, http.HTTPRequest, dport=8180)
 bind_layers(TCP, WebSocket, dport=8180)
+bind_layers(TCP, WebSocket, sport=8180)
 
 def parse(pkt):
     ws_str = "WebSocket" if pkt.haslayer(WebSocket) else ""
