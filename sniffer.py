@@ -119,6 +119,8 @@ _ws_opcode_names = {
   0xf : "reserved_controlF"
 }
 
+decoder = zlib.decompressobj(wbits=-15)
+
 class WebSocket(Packet):
   name = "WebSocket"
   fields_desc = [ FlagsField("flags", 0, 4, ["RSV3", "RSV2", "RSV1", "FIN"]),
@@ -144,33 +146,33 @@ class WebSocket(Packet):
   def post_dissection(self, pkt):
     #print('up top ', type(pkt[WebSocket]), pkt[WebSocket])
     pkt = pkt[WebSocket] # TODO rewrite func remove this
-    if(pkt.mask_flag == 1 and pkt.frame_data is not None):
-      demask = array.array('I', [pkt.mask >> 24 & 0xff, pkt.mask >> 16 & 0xff, pkt.mask >> 8 & 0xff, pkt.mask & 0xff])
-      unmasked = ''
-      print("\tBEFORE: %s" % pkt.frame_data)
-      for i, c in enumerate(pkt.frame_data):
-        unmasked += chr(c ^ (demask[i % 4]))
-      pkt.frame_data = unmasked
-      print("\tAFTER: %s" % pkt.frame_data)
-      #print('before')
-      #print('here')
-    #print('done')
     try:
       #print('inside ', pkt.frame_data)
-      d = zlib.decompressobj(wbits=-15)
-      pkt.frame_data = d.decompress(pkt.frame_data + b"\x00\x00\xff\xff")
+      pkt.frame_data = decoder.decompress(pkt.frame_data + b"\x00\x00\xff\xff")
       #print(pkt.frame_data) 
       #if isinstance(pkt, WebSocket):
       #    pkt.frame_data = decode(pkt)
     except Exception as e:
       print(e)
+    if(pkt.mask_flag == 1 and pkt.frame_data is not None):
+      demask = array.array('I', [pkt.mask >> 24 & 0xff, pkt.mask >> 16 & 0xff, pkt.mask >> 8 & 0xff, pkt.mask & 0xff])
+      unmasked = ''
+      #print("\tBEFORE: %s" % pkt.frame_data)
+      for i, c in enumerate(pkt.frame_data):
+        unmasked += chr(c ^ (demask[i % 4]))
+      pkt.frame_data = unmasked
+      #print("\tAFTER: %s" % pkt.frame_data)
+      #print('before')
+      #print('here')
+    #print('done')
     return pkt
 
-bind_layers(TCP, WebSocket, dport=8180)
+#bind_layers(TCP, WebSocket, dport=8180)
 bind_layers(TCP, WebSocket, sport=8180)
 
 def parse(pkt):
-    print('----------------------------------------------------------')
+    #print('----------------------------------------------------------')
+    #if pkt.haslayer(WebSocket): print("OPCODE: %s\tFLAGS: %s" % (_ws_opcode_names[pkt.opcode], pkt.flags))
     ws_str = "WebSocket" if pkt.haslayer(WebSocket) else ""
     print(pkt.sprintf("Sniffed message: %IP.src%:%IP.sport%->%IP.dst%:%IP.dport%\t" + ws_str))
     if ws_str != "": print('\t%s' % pkt[WebSocket].frame_data)
@@ -178,7 +180,7 @@ def parse(pkt):
     if pkt.haslayer(Raw):
         if b'HTTP' in pkt[Raw].load: 
             print('\t%s' % http.HTTPRequest(pkt[Raw].load))
-    print('----------------------------------------------------------')
+    #print('----------------------------------------------------------')
 
 def main():
     sniff(iface="lo", filter="port 8180", prn=parse, store=False)
