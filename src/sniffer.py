@@ -78,7 +78,8 @@ class WebSocket(Packet):
       pkt.frame_data = unmasked
     
     if pkt.frame_data in ALREADY_PARSED: 
-       return pkt # need to execute in precise order for zlib state, can't have duplicates
+      pkt.frame_data = ALREADY_PARSED[pkt.frame_data]
+      return pkt # need to execute in precise order for zlib state, can't have duplicates
     
     try:
       ALREADY_PARSED[pkt.frame_data] = decoder.decompress(pkt.frame_data + b"\x00\x00\xff\xff")
