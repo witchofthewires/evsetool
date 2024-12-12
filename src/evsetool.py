@@ -13,6 +13,8 @@ import argparse
 from ocpp.v16 import call
 from ocpp.v16 import ChargePoint as cp
 
+import sniffer
+
 CSMS_URL = "ws://127.0.0.1:8180/steve/websocket/CentralSystemService"
 ID_TAG = "01234567890123456789"
 CP_NAME = "CP_1"

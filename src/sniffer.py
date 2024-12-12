@@ -15,9 +15,7 @@ http.COMMON_UNSTANDARD_REQUEST_HEADERS.append('Sec-WebSocket-Key')
 UPGRADE_REGEX = re.compile(r"Upgrade: websocket")
 WS_KEY_REGEX = re.compile(r"Sec-WebSocket-Key: (\S+)")
 
-# TODO find better way
 ALREADY_PARSED = {}
-DANIRUNS = 0
 
 # TODO combine files
 def log(msg):
