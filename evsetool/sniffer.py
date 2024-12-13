@@ -44,9 +44,10 @@ _ws_opcode_names = {
   0xf : "reserved_controlF"
 }
 
-decoder = zlib.decompressobj(wbits=-15)
-class WebSocket(Packet):
-  name = "WebSocket"
+# TODO can these two classes be combined somehow?
+src_decoder = zlib.decompressobj(wbits=-15)
+class SrcWebSocket(Packet):
+  name = "SrcWebSocket"
   fields_desc = [ FlagsField("flags", 0, 4, ["RSV3", "RSV2", "RSV1", "FIN"]),
                   BitEnumField("opcode", 0, 4, _ws_opcode_names),
                   BitField("mask_flag", 0, 1),
@@ -69,10 +70,10 @@ class WebSocket(Packet):
     
   def post_dissection(self, pkt):
     
-    global decoder
+    global src_decoder
     global ALREADY_PARSED
     
-    pkt = pkt[WebSocket] # TODO rewrite func remove this
+    pkt = pkt[SrcWebSocket] # TODO rewrite func remove this
     if(pkt.mask_flag == 1 and pkt.frame_data is not None):
       demask = array.array('I', [pkt.mask >> 24 & 0xff, pkt.mask >> 16 & 0xff, pkt.mask >> 8 & 0xff, pkt.mask & 0xff])
       long_demask = [demask[i % 4] for i in range(len(pkt.frame_data))]
@@ -83,20 +84,71 @@ class WebSocket(Packet):
       return pkt # need to execute in precise order for zlib state, can't have duplicates
     
     try:
+      decoder = src_decoder
       ALREADY_PARSED[pkt.frame_data] = decoder.decompress(pkt.frame_data + b'\x00\x00\xff\xff')
       #ALREADY_PARSED[pkt.frame_data] = decoder.decompress(pkt.frame_data)
       pkt.frame_data = ALREADY_PARSED[pkt.frame_data]
     except Exception as e:
-      print(e)
+      print(e, pkt.show())
     return pkt
 
-bind_layers(TCP, WebSocket, dport=8180)
-bind_layers(TCP, WebSocket, sport=8180)
+dst_decoder = zlib.decompressobj(wbits=-15)
+class DstWebSocket(Packet):
+  name = "DstWebSocket"
+  fields_desc = [ FlagsField("flags", 0, 4, ["RSV3", "RSV2", "RSV1", "FIN"]),
+                  BitEnumField("opcode", 0, 4, _ws_opcode_names),
+                  BitField("mask_flag", 0, 1),
+                  BitField("length", 0, 7),
+                  ConditionalField(BitField("length16", None, 16), lambda pkt:pkt.length == 126),
+                  ConditionalField(BitField("length64", None, 64), lambda pkt:pkt.length == 127),
+                  ConditionalField(XIntField("mask", 0), lambda pkt:pkt.mask_flag == 1),
+                  StrLenField("frame_data", None,
+                              length_from=lambda pkt:(pkt.length64 if pkt.length64 else
+                                                      pkt.length16 if pkt.length16 else
+                                                      pkt.length))
+                ]
+  
+  def guess_payload_class(self, payload):
+    if 'HTTP' in payload: return http.HTTPRequest
+    elif isinstance(self.underlayer, TCP):
+      return DstWebSocket
+    else:
+      return Packet.guess_payload_class(self, payload)
+    
+  def post_dissection(self, pkt):
+    
+    global dst_decoder
+    global ALREADY_PARSED
+
+    pkt = pkt[DstWebSocket] # TODO rewrite func remove this
+    if(pkt.mask_flag == 1 and pkt.frame_data is not None):
+      demask = array.array('I', [pkt.mask >> 24 & 0xff, pkt.mask >> 16 & 0xff, pkt.mask >> 8 & 0xff, pkt.mask & 0xff])
+      long_demask = [demask[i % 4] for i in range(len(pkt.frame_data))]
+      pkt.frame_data = bytes([d ^ b for d,b in zip(pkt.frame_data, long_demask)])
+    
+    if pkt.frame_data in ALREADY_PARSED: 
+      pkt.frame_data = ALREADY_PARSED[pkt.frame_data]
+      return pkt # need to execute in precise order for zlib state, can't have duplicates
+    
+    try:
+      decoder = dst_decoder
+      ALREADY_PARSED[pkt.frame_data] = decoder.decompress(pkt.frame_data + b'\x00\x00\xff\xff')
+      #ALREADY_PARSED[pkt.frame_data] = decoder.decompress(pkt.frame_data)
+      pkt.frame_data = ALREADY_PARSED[pkt.frame_data]
+    except Exception as e:
+      print(e, pkt.show())
+    return pkt
+
+bind_layers(TCP, SrcWebSocket, dport=8180)
+bind_layers(TCP, DstWebSocket, sport=8180)
 
 def parse(pkt):
-    ws_str = "WebSocket" if pkt.haslayer(WebSocket) else ""
+    
+    ws_str = "WebSocket" if (pkt.haslayer(SrcWebSocket) or pkt.haslayer(DstWebSocket)) else ""
     net_str = pkt.sprintf("%IP.src%:%IP.sport%->%IP.dst%:%IP.dport% ") + ws_str
-    if ws_str != "": print('%s\t%s' % (net_str, pkt[WebSocket].frame_data))
+    if ws_str != "": 
+        data = pkt[SrcWebSocket].frame_data if pkt.haslayer(SrcWebSocket) else pkt[DstWebSocket].frame_data
+        print('%s\t%s' % (net_str, data))
     http_str = "HTTP"
     if pkt.haslayer(Raw):
         if b'HTTP' in pkt[Raw].load: 
