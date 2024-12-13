@@ -6,6 +6,8 @@ import time
 import datetime 
 import argparse
 
+from scapy.utils import rdpcap
+
 #from ocpp.v201.enums import RegistrationStatusType
 #from ocpp.v201 import call
 #from ocpp.v201 import ChargePoint as cp
@@ -130,6 +132,8 @@ if __name__ == '__main__':
                     help='Name of the specific model of EVSE')
     parser.add_argument('--name', type=str, default='CP_1',
                     help='API endpoint for the EVSE')
+    parser.add_argument('--pcap', type=str,
+                    help='Read from a PCAP rather than sniffing LAN')
     
     args = parser.parse_args()
     url = CSMS_URL if args.url is None else args.url
@@ -141,9 +145,14 @@ if __name__ == '__main__':
     if args.sniff:
         print("Starting sniffer...")
         sniffer.main()
+    elif args.pcap:
+        print("Reading pcap <%s>..." % args.pcap)
+        pkt = rdpcap(args.pcap)
+        for p in map(sniffer.parse, pkt): 
+            if p is not None: print(p)         
     elif args.csms:
         print("Querying CSMS...")
         asyncio.run(simflow_diagnostics(url, id_tag, args.name))
     else:
-        print("ERROR: Please select one of the following: [sniff|csms]")
+        print("ERROR: Please select one of the following: [sniff|pcap|csms]")
         print("use --help for more information")
