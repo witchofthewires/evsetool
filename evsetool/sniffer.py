@@ -91,16 +91,16 @@ class WebSocket(Packet):
     return pkt
 
 bind_layers(TCP, WebSocket, dport=8180)
-#bind_layers(TCP, WebSocket, sport=8180)
+bind_layers(TCP, WebSocket, sport=8180)
 
 def parse(pkt):
     ws_str = "WebSocket" if pkt.haslayer(WebSocket) else ""
-    print(pkt.sprintf("Sniffed message: %IP.src%:%IP.sport%->%IP.dst%:%IP.dport%\t" + ws_str))
-    if ws_str != "": print('\tOutput data: %s' % (pkt[WebSocket].frame_data))
-    http_str = ""
+    net_str = pkt.sprintf("%IP.src%:%IP.sport%->%IP.dst%:%IP.dport% ") + ws_str
+    if ws_str != "": print('%s\t%s' % (net_str, pkt[WebSocket].frame_data))
+    http_str = "HTTP"
     if pkt.haslayer(Raw):
         if b'HTTP' in pkt[Raw].load: 
-            print('\t%s' % http.HTTPRequest(pkt[Raw].load))
+            print('%s %s\t%s' % (net_str, http_str, http.HTTPRequest(pkt[Raw].load)))
 
 def main():
     sniff(iface="lo", filter="port 8180", prn=parse, store=False)
