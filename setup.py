@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
 name='evsetool',
-version='0.1.0',
+version='0.1.1',
 author='Danielle McGuire',
 author_email='dcm678@gmail.com',
 description='EVSE Red Team Swiss Army CLI',
