@@ -1,0 +1,35 @@
+[project]
+name = "evsetool"
+version = "0.1.0"
+authors = [
+  { name="Danielle McGuire", email="dcm678@gmail.com" },
+]
+description = "EVSE Red Team Toolkit"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "scapy",
+    "websockets",
+    "asyncio",
+    "ocpp",
+    "pytest",
+    "coverage",
+]
+
+
+[project.urls]
+Homepage = "https://github.com/witchofthewires/evsetool.git"
+Issues = "https://github.com/witchofthewires/evsetool.git/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/evsetool"]
