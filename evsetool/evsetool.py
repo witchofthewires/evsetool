@@ -12,7 +12,7 @@ from scapy.utils import rdpcap
 #from ocpp.v201 import call
 #from ocpp.v201 import ChargePoint as cp
 #from ocpp.v16.enums import RegistrationStatus
-from ocpp.v16 import call
+from ocpp.v16 import call, datatypes, enums
 from ocpp.v16 import ChargePoint as cp
 
 import sniffer
@@ -44,15 +44,6 @@ class OCPPv16ChargePoint(cp):
         res = await self.call(req)
         log("sent BootNotification for %s %s" % (self.vendor, self.model))
 
-    async def heartbeat(self):
-        req = call.Heartbeat()
-        res = await self.call(req)
-
-    async def beat_heart(self):
-        while True: 
-            time.sleep(10)
-            await self.heartbeat()
-
     async def authorize(self, id_tag):
         req = call.Authorize(id_tag)
         res = await self.call(req)
@@ -70,6 +61,20 @@ class OCPPv16ChargePoint(cp):
         req = call.FirmwareStatusNotification(msg)
         res = await self.call(req)
         log("Sent FirmwareStatusNotification <%s>" % msg)
+
+    async def heartbeat(self):
+        req = call.Heartbeat()
+        res = await self.call(req)
+
+    async def beat_heart(self):
+        while True: 
+            time.sleep(10)
+            await self.heartbeat()
+
+    async def meter_values(self, connector_id, meter_values, transaction_id=None):
+        req = call.MeterValues(connector_id, meter_values, transaction_id)
+        res = await self.call(req)
+        log("Sent MeterValues successfully")
 
     async def start_transaction(self, connector_id, id_tag, meter_start, timestamp, reservation_id=None):
         req = call.StartTransaction(connector_id, id_tag, meter_start, timestamp, reservation_id=reservation_id)
@@ -96,11 +101,33 @@ async def simflow_diagnostics(url, id_tag, name = None):
     async with websockets.connect('%s/%s' % (url, name),
                                   subprotocols=['ocpp1.6']) as ws:
         cp = OCPPv16ChargePoint(id_tag, name, ws)
+        meter_values = [datatypes.MeterValue(rightnow(), [datatypes.SampledValue('100', 
+                                                                                enums.ReadingContext.other, 
+                                                                                enums.ValueFormat.raw,
+                                                                                enums.Measurand.temperature,
+                                                                                'L1',
+                                                                                enums.Location.body,
+                                                                                enums.UnitOfMeasure.fahrenheit),
+                                                         datatypes.SampledValue('99', 
+                                                                                enums.ReadingContext.other, 
+                                                                                enums.ValueFormat.raw,
+                                                                                enums.Measurand.temperature,
+                                                                                'L1',
+                                                                                enums.Location.body,
+                                                                                enums.UnitOfMeasure.fahrenheit),
+                                                         datatypes.SampledValue('101', 
+                                                                                enums.ReadingContext.other, 
+                                                                                enums.ValueFormat.raw,
+                                                                                enums.Measurand.temperature,
+                                                                                'L1',
+                                                                                enums.Location.body,
+                                                                                enums.UnitOfMeasure.fahrenheit)])]                       
         await asyncio.gather(cp.start(),
                              cp.boot_notification(), 
                              cp.authorize(cp.id_tag),
                              cp.firmware_status_notification(msg='Installed'),
-                             cp.diagnostics_status_notification(msg='Uploading'))
+                             cp.diagnostics_status_notification(msg='Uploading'),
+                             cp.meter_values(1, meter_values))
 
 async def simflow_transaction(url, id_tag, name = None):
     if name is None: name = CP_NAME
