@@ -71,6 +71,11 @@ class OCPPv16ChargePoint(cp):
             time.sleep(10)
             await self.heartbeat()
 
+    async def data_transfer(self, vendor_id, message_id, data=None):
+        req = call.DataTransfer(vendor_id, message_id, data)
+        res = await self.call(req)
+        log("Sent DataTransfer message successfully")
+
     async def meter_values(self, connector_id, meter_values, transaction_id=None):
         req = call.MeterValues(connector_id, meter_values, transaction_id)
         res = await self.call(req)
@@ -84,6 +89,24 @@ class OCPPv16ChargePoint(cp):
         else:
             # TODO raise exception
             log("CSMS denied StartTransaction")
+
+    async def status_notification(self, 
+                                  connector_id, 
+                                  error_code, 
+                                  status, 
+                                  info=None, 
+                                  timestamp=None, 
+                                  vendor_id=None, 
+                                  vendor_error_code=None):
+        req = call.StatusNotification(connector_id, 
+                                      error_code,
+                                      status, 
+                                      timestamp, 
+                                      info, 
+                                      vendor_id, 
+                                      vendor_error_code)
+        req = await self.call(req)
+        log("StatusNotification successful")
 
     async def stop_transaction(self, id_tag, meter_stop, timestamp, transaction_id, reason=None, transaction_data=None):
         if transaction_id is None: transaction_id=0 # TODO fix this
@@ -121,13 +144,17 @@ async def simflow_diagnostics(url, id_tag, name = None):
                                                                                 enums.Measurand.temperature,
                                                                                 'L1',
                                                                                 enums.Location.body,
-                                                                                enums.UnitOfMeasure.fahrenheit)])]                       
+                                                                                enums.UnitOfMeasure.fahrenheit)])]       
+        vendor_id = 'A' *255
+        message_id = 'B' *50
+        data = "there are spirits watching over me/they refuse my filthy hands"                
         await asyncio.gather(cp.start(),
                              cp.boot_notification(), 
                              cp.authorize(cp.id_tag),
                              cp.firmware_status_notification(msg='Installed'),
                              cp.diagnostics_status_notification(msg='Uploading'),
-                             cp.meter_values(1, meter_values))
+                             cp.meter_values(1, meter_values),
+                             cp.data_transfer(vendor_id, message_id, data))
 
 async def simflow_transaction(url, id_tag, name = None):
     if name is None: name = CP_NAME
@@ -136,11 +163,29 @@ async def simflow_transaction(url, id_tag, name = None):
     async with websockets.connect('%s/%s' % (url, name),
                                   subprotocols=['ocpp1.6']) as ws:
         cp = OCPPv16ChargePoint(id_tag, name, ws)
+        vendor_id = "AAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        vendor_error_code = "200"
         await asyncio.gather(cp.start(),
                              cp.boot_notification(), 
                              cp.authorize(cp.id_tag),
-                             cp.start_transaction(CONNECTOR_ID, cp.id_tag, METER_START, timestamp=rightnow(), reservation_id=reservation_id),
-                             cp.stop_transaction(cp.id_tag, METER_STOP, transaction_id=None, timestamp=rightnow(), reason=None, transaction_data=None))
+                             cp.start_transaction(CONNECTOR_ID, 
+                                                  cp.id_tag, 
+                                                  METER_START, 
+                                                  timestamp=rightnow(), 
+                                                  reservation_id=reservation_id),
+                             cp.status_notification(CONNECTOR_ID, 
+                                                    enums.ChargePointErrorCode.no_error, 
+                                                    enums.ChargePointStatus.charging, 
+                                                    "all good here, how are you?", 
+                                                    rightnow(), 
+                                                    vendor_id, 
+                                                    vendor_error_code),
+                             cp.stop_transaction(cp.id_tag, 
+                                                 METER_STOP, 
+                                                 transaction_id=None, 
+                                                 timestamp=rightnow(), 
+                                                 reason=None, 
+                                                 transaction_data=None))
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='EVSE Red Team Tool')
     parser.add_argument('-v', '--verbose', action='store_true',
@@ -179,7 +224,7 @@ if __name__ == '__main__':
             if p is not None: print(p)         
     elif args.csms:
         print("Querying CSMS...")
-        asyncio.run(simflow_diagnostics(url, id_tag, args.name))
+        asyncio.run(simflow_transaction(url, id_tag, args.name))
     else:
         print("ERROR: Please select one of the following: [sniff|pcap|csms]")
         print("use --help for more information")
