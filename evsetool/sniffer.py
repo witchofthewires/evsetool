@@ -68,28 +68,30 @@ class WebSocket(Packet):
       return Packet.guess_payload_class(self, payload)
     
   def post_dissection(self, pkt):
+    
     global decoder
+    global ALREADY_PARSED
+    
     pkt = pkt[WebSocket] # TODO rewrite func remove this
     if(pkt.mask_flag == 1 and pkt.frame_data is not None):
       demask = array.array('I', [pkt.mask >> 24 & 0xff, pkt.mask >> 16 & 0xff, pkt.mask >> 8 & 0xff, pkt.mask & 0xff])
-      unmasked = ''
-      for i, c in enumerate(pkt.frame_data):
-        unmasked += chr(c ^ (demask[i % 4]))
-      pkt.frame_data = unmasked
+      long_demask = [demask[i % 4] for i in range(len(pkt.frame_data))]
+      pkt.frame_data = bytes([d ^ b for d,b in zip(pkt.frame_data, long_demask)])
     
     if pkt.frame_data in ALREADY_PARSED: 
       pkt.frame_data = ALREADY_PARSED[pkt.frame_data]
       return pkt # need to execute in precise order for zlib state, can't have duplicates
     
     try:
-      ALREADY_PARSED[pkt.frame_data] = decoder.decompress(pkt.frame_data + b"\x00\x00\xff\xff")
+      ALREADY_PARSED[pkt.frame_data] = decoder.decompress(pkt.frame_data + b'\x00\x00\xff\xff')
+      #ALREADY_PARSED[pkt.frame_data] = decoder.decompress(pkt.frame_data)
       pkt.frame_data = ALREADY_PARSED[pkt.frame_data]
     except Exception as e:
       print(e)
     return pkt
 
-#bind_layers(TCP, WebSocket, dport=8180)
-bind_layers(TCP, WebSocket, sport=8180)
+bind_layers(TCP, WebSocket, dport=8180)
+#bind_layers(TCP, WebSocket, sport=8180)
 
 def parse(pkt):
     ws_str = "WebSocket" if pkt.haslayer(WebSocket) else ""
