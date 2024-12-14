@@ -37,6 +37,18 @@ cd steve
 sudo docker-compose up -d
 ```
 
+Wait about 5 minutes for Docker Compose to bring the StEVE application online, then navigate to http://127.0.0.1:8181/steve/manager/login and login with the default creds 'admin:1234'. You should then reach the application homepage:
+
+![Screenshot showing the StEVe homepage](static/steve1.png)
+
+Click on 'Number of Charge Points' to bring up the Charge Point Overview:
+
+![Screenshot showing a summary of ChargePoints registered with the application](static/steve2.png)
+
+Click on 'Add New' and enter a Chargepoint ID of 'CP_1', then click Add.
+
+![Screenshot showing the creation page for a new ChargePoint](static/steve3.png)
+
 To run the sniffer, execute the following in the evsetool directory:
 ```
 sudo venv/bin/python evsetool/evsetool.py --sniff -v
