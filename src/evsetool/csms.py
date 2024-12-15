@@ -15,13 +15,6 @@ from scapy.utils import rdpcap
 from ocpp.v16 import call, datatypes, enums
 from ocpp.v16 import ChargePoint as cp
 
-CSMS_URL = "ws://127.0.0.1:8180/steve/websocket/CentralSystemService"
-ID_TAG = "01234567890123456789"
-CP_NAME = "CP_1"
-CONNECTOR_ID = 2
-METER_START = 1000
-METER_STOP = 2000
-
 def log(msg):
     print("[*] %s - %s" % (rightnow(), msg))
 
@@ -154,24 +147,27 @@ async def simflow_diagnostics(url, id_tag, name = None):
                              cp.meter_values(1, meter_values),
                              cp.data_transfer(vendor_id, message_id, data))
 
-async def simflow_transaction(url, id_tag, name = None):
+async def simflow_transaction(url, id_tag, name=None):
     if name is None: name = CP_NAME
     reservation_id = None
 
     async with websockets.connect('%s/%s' % (url, name),
                                   subprotocols=['ocpp1.6']) as ws:
         cp = OCPPv16ChargePoint(id_tag, name, ws)
+        connector_id = 1
+        meter_start = 1000
+        meter_stop = 2000
         vendor_id = "AAAAAAAAAAAAAAAAAAAAAAAAAAAA"
         vendor_error_code = "200"
         await asyncio.gather(cp.start(),
                              cp.boot_notification(), 
                              cp.authorize(cp.id_tag),
-                             cp.start_transaction(CONNECTOR_ID, 
+                             cp.start_transaction(connector_id, 
                                                   cp.id_tag, 
-                                                  METER_START, 
+                                                  meter_start, 
                                                   timestamp=rightnow(), 
                                                   reservation_id=reservation_id),
-                             cp.status_notification(CONNECTOR_ID, 
+                             cp.status_notification(connector_id, 
                                                     enums.ChargePointErrorCode.no_error, 
                                                     enums.ChargePointStatus.charging, 
                                                     "all good here, how are you?", 
@@ -179,7 +175,7 @@ async def simflow_transaction(url, id_tag, name = None):
                                                     vendor_id, 
                                                     vendor_error_code),
                              cp.stop_transaction(cp.id_tag, 
-                                                 METER_STOP, 
+                                                 meter_stop, 
                                                  transaction_id=None, 
                                                  timestamp=rightnow(), 
                                                  reason=None, 

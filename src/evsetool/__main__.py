@@ -2,15 +2,16 @@ import argparse
 import logging
 import asyncio
 
+import yaml
+
 from .sniffer import parse, main as sniff
 from .csms import simflow_transaction
 
-CSMS_URL = "ws://127.0.0.1:8180/steve/websocket/CentralSystemService"
-ID_TAG = "01234567890123456789"
-    
 parser = argparse.ArgumentParser(description='EVSE Red Team Tool')
 parser.add_argument('-v', '--verbose', action='store_true',
                 help='Show full OCPP traffic output')
+parser.add_argument('-f', '--file', type=str,
+                help='Path to YAML configuration file')
 parser.add_argument('--sniff', action='store_true',
                 help='Listen passively for OCPP1.6 traffic over TCP 8180')
 parser.add_argument('--csms', action='store_true',
@@ -29,8 +30,13 @@ parser.add_argument('--pcap', type=str,
                 help='Read from a PCAP rather than sniffing LAN')
 
 args = parser.parse_args()
-url = CSMS_URL if args.url is None else args.url
-id_tag = ID_TAG if args.id is None else args.id
+
+args.file = './default.config.yaml' if not args.file else args.file
+with open(args.file) as f:
+    cfg = yaml.load(f, Loader=yaml.FullLoader)
+                    
+url = cfg['csms'] if args.url is None else args.url
+id_tag = cfg['id_tag'] if args.id is None else args.id
 log_level = logging.INFO if args.verbose else logging.ERROR
 logging.basicConfig(level=log_level)
 args = parser.parse_args()

@@ -1,0 +1,2 @@
+csms: "ws://127.0.0.1:8180/steve/websocket/CentralSystemService"
+id_tag: "01234567890123456789"
