@@ -7,13 +7,11 @@ from ocpp.routing import on
 from ocpp.v16 import ChargePoint as cp
 from ocpp.v16 import call_result, datatypes, enums
 
-from utils import *
+from .utils import *
 
 #from ocpp.v201 import ChargePoint as cp
 #from ocpp.v201 import call_result
 #from ocpp.v201.enums import RegistrationStatusType
-
-logging.basicConfig(level=logging.INFO)
 
 class OCPPv16Handler(cp):
     @on('BootNotification')
@@ -43,10 +41,9 @@ async def on_connect(websocket):
 
     await handler.start()
 
-async def main():
-    ip_addr = '0.0.0.0'
-    port = 9000
-    protocol = 'ocpp1.6'
+async def serve_OCPPv16(ip_addr, port=None, protocol=None):
+    port = 8180 if port is None else port
+    protocol = 'ocpp1.6' if protocol is None else protocol
     server = await websockets.serve(
         on_connect,
         ip_addr,
@@ -55,6 +52,3 @@ async def main():
     )
     logging.info("CSMS Started, serving %s at ws://%s:%d" % (protocol, ip_addr, port))
     await server.wait_closed()
-
-if __name__ == '__main__':
-    asyncio.run(main())

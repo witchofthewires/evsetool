@@ -1,2 +1,3 @@
-csms: "ws://127.0.0.1:8180/steve/websocket/CentralSystemService"
+url: "ws://127.0.0.1:8180/steve/websocket/CentralSystemService"
 id_tag: "01234567890123456789"
+local_ocpp_port: 9000
