@@ -4,34 +4,26 @@ import websockets
 from datetime import datetime
 
 from ocpp.routing import on
-from ocpp.v201 import ChargePoint as cp
-from ocpp.v201 import call_result
-from ocpp.v201.enums import RegistrationStatusType
+from ocpp.v16 import ChargePoint as cp
+from ocpp.v16 import call_result, datatypes, enums
+
+#from ocpp.v201 import ChargePoint as cp
+#from ocpp.v201 import call_result
+#from ocpp.v201.enums import RegistrationStatusType
 
 logging.basicConfig(level=logging.INFO)
 
 
 class OCPPv16Handler(cp):
     @on('BootNotification')
-    async def on_boot_notification(self, charging_station, reason, **kwargs):
-        return call_result.BootNotificationPayload(
-            current_time=datetime.utcnow().isoformat(),
-            interval=10,
-            status=RegistrationStatusType.accepted
-        )
+    async def on_boot_notification(self, **kwargs):
+        return call_result.BootNotification(datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ"), 10, enums.RegistrationStatus.accepted)
 
-async def on_connect(websocket, path):
+async def on_connect(websocket):
+    
     """ For every new charge point that connects, create a ChargePoint
     instance and start listening for messages.
     """
-    try:
-        requested_protocols = websocket.request_headers[
-            'Sec-WebSocket-Protocol']
-    except KeyError:
-        logging.info("Client hasn't requested any Subprotocol. "
-                 "Closing Connection")
-        return await websocket.close()
-
     if websocket.subprotocol:
         logging.info("Protocols Matched: %s", websocket.subprotocol)
     else:
@@ -44,7 +36,7 @@ async def on_connect(websocket, path):
                         requested_protocols)
         return await websocket.close()
 
-    charge_point_id = path.strip('/')
+    charge_point_id = websocket.request.path.strip('/')
     handler = OCPPv16Handler(charge_point_id, websocket)
 
     await handler.start()
