@@ -5,7 +5,7 @@ import asyncio
 import yaml
 
 from .sniffer import parse, main as sniff
-from .csms import simflow_transaction
+from .evse import simflow_transaction
 
 parser = argparse.ArgumentParser(description='EVSE Red Team Tool')
 parser.add_argument('-v', '--verbose', action='store_true',
@@ -14,8 +14,10 @@ parser.add_argument('-f', '--file', type=str,
                 help='Path to YAML configuration file')
 parser.add_argument('--sniff', action='store_true',
                 help='Listen passively for OCPP1.6 traffic over TCP 8180')
+parser.add_argument('--evse', action="store_true",
+                help='Interact with EVSE in role of CSMS')
 parser.add_argument('--csms', action='store_true',
-                help='Query CSMS as simulated EVSE')
+                help='Interact with CSMS in role of EVSE')
 parser.add_argument('--url', type=str,
                 help='Address of CSMS to query')
 parser.add_argument('-i', '--id', type=str,
