@@ -10,6 +10,8 @@ import array
 import zlib
 from websockets import frames
 
+from utils import *
+
 http.COMMON_UNSTANDARD_REQUEST_HEADERS.append('Sec-WebSocket-Key')
 
 UPGRADE_REGEX = re.compile(r"Upgrade: websocket")
@@ -17,13 +19,6 @@ WS_KEY_REGEX = re.compile(r"Sec-WebSocket-Key: (\S+)")
 
 ALREADY_PARSED = {}
 
-# TODO combine files
-def log(msg):
-    print("[*] %s - %s" % (rightnow(), msg))
-
-def rightnow():
-    return datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-    
 # RFC6455 section 5.2
 _ws_opcode_names = {
     0 : "continuation_frame",

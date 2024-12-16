@@ -7,17 +7,19 @@ from ocpp.routing import on
 from ocpp.v16 import ChargePoint as cp
 from ocpp.v16 import call_result, datatypes, enums
 
+from utils import *
+
 #from ocpp.v201 import ChargePoint as cp
 #from ocpp.v201 import call_result
 #from ocpp.v201.enums import RegistrationStatusType
 
 logging.basicConfig(level=logging.INFO)
 
-
 class OCPPv16Handler(cp):
     @on('BootNotification')
     async def on_boot_notification(self, **kwargs):
-        return call_result.BootNotification(datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ"), 10, enums.RegistrationStatus.accepted)
+        log("Received BootNotification for %s %s: %s" % (kwargs['charge_point_vendor'], kwargs['charge_point_model'], self.id))
+        return call_result.BootNotification(rightnow(), 10, enums.RegistrationStatus.accepted)
 
 async def on_connect(websocket):
     

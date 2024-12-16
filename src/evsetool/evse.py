@@ -15,11 +15,7 @@ from scapy.utils import rdpcap
 from ocpp.v16 import call, datatypes, enums
 from ocpp.v16 import ChargePoint as cp
 
-def log(msg):
-    print("[*] %s - %s" % (rightnow(), msg))
-
-def rightnow():
-    return datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+from utils import *
 
 class OCPPv16ChargePoint(cp):
 
@@ -140,13 +136,13 @@ async def simflow_diagnostics(url, id_tag, name = None):
         message_id = 'B' *50
         data = "there are spirits watching over me/they refuse my filthy hands"                
         await asyncio.gather(cp.start(),
-                             cp.boot_notification(), 
-                             cp.authorize(cp.id_tag),
+                             cp.boot_notification())
+"""                  cp.authorize(cp.id_tag),
                              cp.firmware_status_notification(msg='Installed'),
                              cp.diagnostics_status_notification(msg='Uploading'),
                              cp.meter_values(1, meter_values),
                              cp.data_transfer(vendor_id, message_id, data))
-
+"""
 async def simflow_transaction(url, id_tag, name=None):
     if name is None: name = CP_NAME
     reservation_id = None

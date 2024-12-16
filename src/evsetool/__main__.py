@@ -5,7 +5,7 @@ import asyncio
 import yaml
 
 from .sniffer import parse, main as sniff
-from .evse import simflow_transaction
+from .evse import simflow_transaction, simflow_diagnostics
 
 parser = argparse.ArgumentParser(description='EVSE Red Team Tool')
 parser.add_argument('-v', '--verbose', action='store_true',
@@ -53,7 +53,7 @@ elif args.pcap:
         if p is not None: print(p)         
 elif args.csms:
     print("Querying CSMS...")
-    asyncio.run(simflow_transaction(url, id_tag, args.name))
+    asyncio.run(simflow_diagnostics(url, id_tag, args.name))
 else:
     print("ERROR: Please select one of the following: [sniff|pcap|csms]")
     print("use --help for more information")
