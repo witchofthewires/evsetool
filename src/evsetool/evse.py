@@ -15,7 +15,7 @@ from scapy.utils import rdpcap
 from ocpp.v16 import call, datatypes, enums
 from ocpp.v16 import ChargePoint as cp
 
-from .utils import *
+from utils import *
 
 class OCPPv16ChargePoint(cp):
 

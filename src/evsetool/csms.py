@@ -7,7 +7,7 @@ from ocpp.routing import on
 from ocpp.v16 import ChargePoint as cp
 from ocpp.v16 import call_result, datatypes, enums
 
-from .utils import *
+from utils import *
 
 #from ocpp.v201 import ChargePoint as cp
 #from ocpp.v201 import call_result
@@ -24,6 +24,15 @@ async def on_connect(websocket):
     """ For every new charge point that connects, create a ChargePoint
     instance and start listening for messages.
     """
+    
+    try:
+        requested_protocols = websocket.request.headers['Sec-WebSocket-Protocol']
+    except KeyError:
+        logging.info("Client hasn't requested any Subprotocol. "
+                     "Closing Connection")
+        return await websocket.close()
+    
+    logging.info('got to this point')
     if websocket.subprotocol:
         logging.info("Protocols Matched: %s", websocket.subprotocol)
     else:

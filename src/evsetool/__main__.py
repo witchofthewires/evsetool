@@ -4,9 +4,9 @@ import asyncio
 
 import yaml
 
-from .sniffer import parse, main as sniff
-from .evse import simflow_transaction, simflow_diagnostics
-from .csms import serve_OCPPv16
+from sniffer import parse, main as sniff
+from evse import simflow_transaction, simflow_diagnostics
+from csms import serve_OCPPv16
 
 parser = argparse.ArgumentParser(description='EVSE Red Team Tool')
 parser.add_argument('-v', '--verbose', action='store_true',

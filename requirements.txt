@@ -4,3 +4,4 @@ asyncio
 ocpp
 pytest
 coverage
+PyYAML
