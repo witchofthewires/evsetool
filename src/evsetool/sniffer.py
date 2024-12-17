@@ -59,7 +59,7 @@ class SrcWebSocket(Packet):
   def guess_payload_class(self, payload):
     if 'HTTP' in payload: return http.HTTPRequest
     elif isinstance(self.underlayer, TCP):
-      return WebSocket
+      return SrcWebSocket
     else:
       return Packet.guess_payload_class(self, payload)
     

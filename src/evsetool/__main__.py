@@ -1,8 +1,8 @@
 import argparse
 import logging
 import asyncio
-
 import yaml
+from scapy.all import rdpcap
 
 from sniffer import parse, main as sniff
 from evse import simflow_transaction, simflow_diagnostics

@@ -105,7 +105,7 @@ class OCPPv16ChargePoint(cp):
             log("CSMS denied StopTransaction")
 
 async def simflow_diagnostics(url, id_tag, name = None):
-    if name is None: name = CP_NAME
+    if name is None: name = "CP_1"
     reservation_id = None
 
     async with websockets.connect('%s/%s' % (url, name),
@@ -144,7 +144,7 @@ async def simflow_diagnostics(url, id_tag, name = None):
                              cp.data_transfer(vendor_id, message_id, data))
 """
 async def simflow_transaction(url, id_tag, name=None):
-    if name is None: name = CP_NAME
+    if name is None: name = "CP_1"
     reservation_id = None
 
     async with websockets.connect('%s/%s' % (url, name),
