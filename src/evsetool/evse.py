@@ -136,13 +136,13 @@ async def simflow_diagnostics(url, id_tag, name = None):
         message_id = 'B' *50
         data = "there are spirits watching over me/they refuse my filthy hands"                
         await asyncio.gather(cp.start(),
-                             cp.boot_notification())
-"""                  cp.authorize(cp.id_tag),
+                             cp.boot_notification(),
+                             cp.authorize(cp.id_tag),
                              cp.firmware_status_notification(msg='Installed'),
                              cp.diagnostics_status_notification(msg='Uploading'),
                              cp.meter_values(1, meter_values),
                              cp.data_transfer(vendor_id, message_id, data))
-"""
+
 async def simflow_transaction(url, id_tag, name=None):
     if name is None: name = "CP_1"
     reservation_id = None

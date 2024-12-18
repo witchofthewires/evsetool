@@ -14,11 +14,66 @@ from utils import *
 #from ocpp.v201.enums import RegistrationStatusType
 
 class OCPPv16Handler(cp):
+
+    def __init__(self, name, ws):
+        self.transactions = {}
+        self.transaction_count = 0
+        super().__init__(name, ws)
+
     @on('BootNotification')
-    async def on_boot_notification(self, **kwargs):
+    async def boot_notification(self, **kwargs):
         log("Received BootNotification for %s %s: %s" % (kwargs['charge_point_vendor'], kwargs['charge_point_model'], self.id))
         return call_result.BootNotification(rightnow(), 10, enums.RegistrationStatus.accepted)
+    
+    @on('Authorize')
+    async def authorize(self, **kwargs):
+        log("Received Authorize request for %s" % (kwargs['id_tag']))
+        return call_result.Authorize(datatypes.IdTagInfo(enums.AuthorizationStatus.accepted, None, None))
+    
+    @on('DataTransfer')
+    async def data_transfer(self, **kwargs):
+        log("Received DataTransfer: %s:%s" % (kwargs['vendor_id'], kwargs['message_id']))
+        return call_result.DataTransfer(enums.DataTransferStatus.accepted)
+    
+    @on('DiagnosticsStatusNotification')
+    async def diagnostics_status_notification(self, **kwargs):
+        log("Received DiagnosticStatusNotification: %s" % (kwargs['status']))
+        return call_result.DiagnosticsStatusNotification()
 
+    @on('FirmwareStatusNotification')
+    async def firmware_status_notification(self, **kwargs):
+        log("Received FirmwareStatusNotification: %s" % (kwargs['status']))
+        return call_result.FirmwareStatusNotification()
+    
+    @on('Heartbeat')
+    async def heartbeat(self):
+        return call_result.Heartbeat(rightnow())
+
+    @on('MeterValues')
+    async def meter_values(self, **kwargs):
+        log("Received MeterValues: %s:%s" % (kwargs['connector_id'], kwargs['meter_value']))
+        return call_result.MeterValues()
+    
+    @on('StartTransaction')
+    async def start_transaction(self, **kwargs):
+        self.transaction_count += 1
+        log("Started transaction %d" % self.transaction_count)
+        self.transactions[self.transaction_count] = call_result.StartTransaction(self.transaction_count, 
+                                                                                 datatypes.IdTagInfo(enums.AuthorizationStatus.accepted, None, None))
+        return self.transactions[self.transaction_count]
+    
+    @on('StatusNotification')
+    async def status_notification(self, **kwargs):
+        log("Received status notification: %s:%s" % (kwargs['status'], kwargs['info']))
+        self.transactions[self.transaction_count] = call_result.StatusNotification()
+        return self.transactions[self.transaction_count]
+    
+    @on('StopTransaction')
+    async def stop_transaction(self, **kwargs):
+        log("Stopped transaction %d" % kwargs['transaction_id'])
+        self.transactions[self.transaction_count] = call_result.StopTransaction(datatypes.IdTagInfo(enums.AuthorizationStatus.accepted, None, None))
+        return self.transactions[self.transaction_count]
+    
 async def on_connect(websocket):
     
     """ For every new charge point that connects, create a ChargePoint

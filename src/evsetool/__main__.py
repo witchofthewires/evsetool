@@ -54,7 +54,7 @@ elif args.pcap:
         if p is not None: print(p)         
 elif args.csms:
     print("Querying CSMS...")
-    asyncio.run(simflow_diagnostics(url, id_tag, args.name))
+    asyncio.run(simflow_transaction(url, id_tag, args.name))
 elif args.serve:
     print("Serving OCPP1.6 on port %d" % cfg['local_ocpp_port'])
     asyncio.run(serve_OCPPv16('0.0.0.0', cfg['local_ocpp_port']))
