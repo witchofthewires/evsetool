@@ -5,3 +5,4 @@ ocpp
 pytest
 coverage
 PyYAML
+libpcap
