@@ -19,12 +19,16 @@ from utils import *
 
 class OCPPv16ChargePoint(cp):
 
-    def __init__(self, id_tag, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.transactions = []
-        self.id_tag = id_tag
+        self.authorization_cache = set([])
         self.vendor = 'TODO'
         self.model = 'CHANGEME'
         super().__init__(*args, **kwargs)
+
+    def _update_cache(self, val):
+        self.authorization_cache.add(val)
+        log("Authorization Cache: %s" % self.authorization_cache)
 
     async def boot_notification(self):
         req = call.BootNotification(charge_point_model=self.model, charge_point_vendor=self.vendor)
@@ -34,7 +38,9 @@ class OCPPv16ChargePoint(cp):
     async def authorize(self, id_tag):
         req = call.Authorize(id_tag)
         res = await self.call(req)
-        if res.id_tag_info['status'] == 'Accepted': log("Authorized with tag <%s>" % id_tag)
+        if res.id_tag_info['status'] == 'Accepted': 
+            log("Authorized with tag <%s>" % id_tag)
+            self._update_cache(id_tag)
         else:
             # TODO raise exception
             log("Failed to authorize with id_tag <%s>" % id_tag)
@@ -72,7 +78,9 @@ class OCPPv16ChargePoint(cp):
         req = call.StartTransaction(connector_id, id_tag, meter_start, timestamp, reservation_id=reservation_id)
         res = await self.call(req)
         self.transactions.append(res.transaction_id)
-        if res.id_tag_info['status'] == 'Accepted': log("CSMS accepted StartTransaction")
+        if res.id_tag_info['status'] == 'Accepted': 
+            log("CSMS accepted StartTransaction")
+            self._update_cache(id_tag)
         else:
             # TODO raise exception
             log("CSMS denied StartTransaction")
@@ -99,7 +107,9 @@ class OCPPv16ChargePoint(cp):
         if transaction_id is None: transaction_id=0 # TODO fix this
         req = call.StopTransaction(meter_stop, timestamp, transaction_id, reason, id_tag, transaction_data)
         res = await self.call(req)
-        if res.id_tag_info['status'] == 'Accepted': log("CSMS accepted StopTransaction")
+        if res.id_tag_info['status'] == 'Accepted': 
+            log("CSMS accepted StopTransaction")
+            self._update_cache(id_tag)
         else:
             # TODO raise exception
             log("CSMS denied StopTransaction")
@@ -110,7 +120,7 @@ async def simflow_diagnostics(url, id_tag, name = None):
 
     async with websockets.connect('%s/%s' % (url, name),
                                   subprotocols=['ocpp1.6']) as ws:
-        cp = OCPPv16ChargePoint(id_tag, name, ws)
+        cp = OCPPv16ChargePoint(name, ws)
         meter_values = [datatypes.MeterValue(rightnow(), [datatypes.SampledValue('100', 
                                                                                 enums.ReadingContext.other, 
                                                                                 enums.ValueFormat.raw,
@@ -137,7 +147,7 @@ async def simflow_diagnostics(url, id_tag, name = None):
         data = "there are spirits watching over me/they refuse my filthy hands"                
         await asyncio.gather(cp.start(),
                              cp.boot_notification(),
-                             cp.authorize(cp.id_tag),
+                             cp.authorize(id_tag),
                              cp.firmware_status_notification(msg='Installed'),
                              cp.diagnostics_status_notification(msg='Uploading'),
                              cp.meter_values(1, meter_values),
@@ -149,7 +159,7 @@ async def simflow_transaction(url, id_tag, name=None):
 
     async with websockets.connect('%s/%s' % (url, name),
                                   subprotocols=['ocpp1.6']) as ws:
-        cp = OCPPv16ChargePoint(id_tag, name, ws)
+        cp = OCPPv16ChargePoint(name, ws)
         connector_id = 1
         meter_start = 1000
         meter_stop = 2000
@@ -157,9 +167,9 @@ async def simflow_transaction(url, id_tag, name=None):
         vendor_error_code = "200"
         await asyncio.gather(cp.start(),
                              cp.boot_notification(), 
-                             cp.authorize(cp.id_tag),
+                             cp.authorize(id_tag),
                              cp.start_transaction(connector_id, 
-                                                  cp.id_tag, 
+                                                  id_tag, 
                                                   meter_start, 
                                                   timestamp=rightnow(), 
                                                   reservation_id=reservation_id),
@@ -170,7 +180,7 @@ async def simflow_transaction(url, id_tag, name=None):
                                                     rightnow(), 
                                                     vendor_id, 
                                                     vendor_error_code),
-                             cp.stop_transaction(cp.id_tag, 
+                             cp.stop_transaction(id_tag, 
                                                  meter_stop, 
                                                  transaction_id=None, 
                                                  timestamp=rightnow(), 
