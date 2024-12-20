@@ -22,27 +22,27 @@ class OCPPv16Handler(cp):
 
     @on('BootNotification')
     async def boot_notification(self, **kwargs):
-        log("Received BootNotification for %s %s: %s" % (kwargs['charge_point_vendor'], kwargs['charge_point_model'], self.id))
+        log("%s (%s %s) sent BootNotification" % (self.id, kwargs['charge_point_vendor'], kwargs['charge_point_model']))
         return call_result.BootNotification(rightnow(), 10, enums.RegistrationStatus.accepted)
     
     @on('Authorize')
     async def authorize(self, **kwargs):
-        log("Received Authorize request for %s" % (kwargs['id_tag']))
+        log("%s requested Authorize for id_tag %s\t\tACCEPTED" % (self.id, kwargs['id_tag']))
         return call_result.Authorize(datatypes.IdTagInfo(enums.AuthorizationStatus.accepted, None, None))
     
     @on('DataTransfer')
     async def data_transfer(self, **kwargs):
-        log("Received DataTransfer: %s:%s" % (kwargs['vendor_id'], kwargs['message_id']))
+        log("%s sent DataTransfer: %s:%s\t\tACCEPTED" % (self.id, kwargs['vendor_id'], kwargs['message_id']))
         return call_result.DataTransfer(enums.DataTransferStatus.accepted)
     
     @on('DiagnosticsStatusNotification')
     async def diagnostics_status_notification(self, **kwargs):
-        log("Received DiagnosticStatusNotification: %s" % (kwargs['status']))
+        log("%s sent DiagnosticStatusNotification: %s" % (self.id, kwargs['status']))
         return call_result.DiagnosticsStatusNotification()
 
     @on('FirmwareStatusNotification')
     async def firmware_status_notification(self, **kwargs):
-        log("Received FirmwareStatusNotification: %s" % (kwargs['status']))
+        log("%s sent FirmwareStatusNotification: %s" % (self.id, kwargs['status']))
         return call_result.FirmwareStatusNotification()
     
     @on('Heartbeat')
@@ -51,26 +51,26 @@ class OCPPv16Handler(cp):
 
     @on('MeterValues')
     async def meter_values(self, **kwargs):
-        log("Received MeterValues: %s:%s" % (kwargs['connector_id'], kwargs['meter_value']))
+        log("%s sent MeterValues: %s:%s" % (self.id, kwargs['connector_id'], kwargs['meter_value']))
         return call_result.MeterValues()
     
     @on('StartTransaction')
     async def start_transaction(self, **kwargs):
         self.transaction_count += 1
-        log("Started transaction %d" % self.transaction_count)
+        log("%s requested StartTransaction for id_tag %s\t\tACCEPTED" % (self.id, kwargs['id_tag']))
         self.transactions[self.transaction_count] = call_result.StartTransaction(self.transaction_count, 
                                                                                  datatypes.IdTagInfo(enums.AuthorizationStatus.accepted, None, None))
         return self.transactions[self.transaction_count]
     
     @on('StatusNotification')
     async def status_notification(self, **kwargs):
-        log("Received status notification: %s:%s" % (kwargs['status'], kwargs['info']))
+        log("%s sent StatusNotification { %s:%s }" % (self.id, kwargs['status'], kwargs['info']))
         self.transactions[self.transaction_count] = call_result.StatusNotification()
         return self.transactions[self.transaction_count]
     
     @on('StopTransaction')
     async def stop_transaction(self, **kwargs):
-        log("Stopped transaction %d" % kwargs['transaction_id'])
+        log("%s requested StopTransaction for id_tag %s\t\tACCEPTED" % (self.id, kwargs['id_tag']))
         self.transactions[self.transaction_count] = call_result.StopTransaction(datatypes.IdTagInfo(enums.AuthorizationStatus.accepted, None, None))
         return self.transactions[self.transaction_count]
     

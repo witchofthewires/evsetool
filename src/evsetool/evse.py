@@ -22,8 +22,10 @@ class OCPPv16ChargePoint(cp):
     def __init__(self, *args, **kwargs):
         self.transactions = []
         self.authorization_cache = set([])
-        self.vendor = 'TODO'
-        self.model = 'CHANGEME'
+        self.vendor = 'TODO' if 'vendor' not in kwargs else kwargs['vendor']
+        self.model = 'CHANGEME' if 'model' not in kwargs else kwargs['model']
+        kwargs.pop('vendor', None)
+        kwargs.pop('model', None)
         super().__init__(*args, **kwargs)
 
     def _update_cache(self, val):
@@ -159,7 +161,7 @@ async def simflow_transaction(url, id_tag, name=None):
 
     async with websockets.connect('%s/%s' % (url, name),
                                   subprotocols=['ocpp1.6']) as ws:
-        cp = OCPPv16ChargePoint(name, ws)
+        cp = OCPPv16ChargePoint(name, ws, vendor='PowerMax', model='AC1959')
         connector_id = 1
         meter_start = 1000
         meter_stop = 2000

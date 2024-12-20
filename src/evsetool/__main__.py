@@ -7,6 +7,7 @@ from scapy.all import rdpcap
 from sniffer import parse, main as sniff
 from evse import simflow_transaction, simflow_diagnostics
 from csms import serve_OCPPv16
+from utils import *
 
 parser = argparse.ArgumentParser(description='EVSE Red Team Tool')
 parser.add_argument('-v', '--verbose', action='store_true',
@@ -45,18 +46,18 @@ logging.basicConfig(level=log_level)
 args = parser.parse_args()
 
 if args.sniff:
-    print("Starting sniffer...")
+    log("EVSETOOL::Starting sniffer...")
     sniff()
 elif args.pcap:
-    print("Reading pcap <%s>..." % args.pcap)
+    log("EVSETOOL::Reading pcap <%s>..." % args.pcap)
     pkt = rdpcap(args.pcap)
     for p in map(parse, pkt): 
         if p is not None: print(p)         
 elif args.csms:
-    print("Querying CSMS...")
+    log("EVSETOOL::Querying CSMS...")
     asyncio.run(simflow_transaction(url, id_tag, args.name))
 elif args.serve:
-    print("Serving OCPP1.6 on port %d" % cfg['local_ocpp_port'])
+    log("EVSETOOL::Serving OCPP1.6 on port %d" % cfg['local_ocpp_port'])
     asyncio.run(serve_OCPPv16('0.0.0.0', cfg['local_ocpp_port']))
 else:
     print("ERROR: Please select one of the following: [sniff|pcap|csms]")
