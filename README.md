@@ -67,3 +67,5 @@ details
 
 ## Acknowledgements
 [Starting point for WebSocket parser](https://github.com/mutantzombie/WebSocketNotes/blob/main/scapy/WebSocket.py)
+
+[Wifi Decryption](https://github.com/TheNiska/WPA2-PSK-Decryptor/blob/main/decryptor_multiprocess.py)
