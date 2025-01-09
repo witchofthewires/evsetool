@@ -9,4 +9,4 @@ test:
 	venv/bin/python -m pytest -v
 
 init-steve-db:
-    mariadb -u steve --password=changeme -P 3306 --skip-ssl < steve-config.sql
+	mariadb -u steve --password=changeme -P 3306 --skip-ssl < steve-config.sql

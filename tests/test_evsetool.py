@@ -55,6 +55,15 @@ def test_wifi_decryptor_ccm_decryption():
 def test_ccm_encrypt_rfc3610_testvector1():
     aes_key = bytes.fromhex("C0C1C2C3C4C5C6C7C8C9CACBCCCDCECF")
     nonce = bytes.fromhex("00000003020100A0A1A2A3A4A5")
-    ptext = bytes.fromhex("000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E")
-    ctext = wifi_decryptor.aes_ccm_decrypt(aes_key, nonce, ptext, aad)
-    assert ctext == bytes.fromhex("0001020304050607588C979A61C663D2F066D0C2C0F989806D5F6B61DAC38417E8D12CFDF926E0")
+    input_data = bytes.fromhex("000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E")
+    aad = input_data[:8]
+    ptext = input_data[8:]
+    print("Key: %s" % hexlify(aes_key))
+    print("Nonce: %s" % hexlify(nonce))
+    print("Ptext: %s" % hexlify(ptext))
+    print("aad: %s" % hexlify(aad))
+    ctext, mac = wifi_decryptor.aes_ccm_encrypt(aes_key, nonce, ptext, aad)
+    print("Ctext: %s" % hexlify(ctext))
+    print("MAC: %s" % hexlify(mac))
+    result = aad + ctext + mac
+    assert hexlify(result) == b"0001020304050607588C979A61C663D2F066D0C2C0F989806D5F6B61DAC38417E8D12CFDF926E0".lower()

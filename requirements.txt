@@ -6,3 +6,4 @@ pytest
 coverage
 PyYAML
 libpcap
+pycryptodome

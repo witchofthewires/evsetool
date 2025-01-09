@@ -11,6 +11,8 @@ from os import cpu_count
 from multiprocessing import Pool
 from copy import deepcopy as copy
 
+from Crypto.Cipher import AES
+
 def check(pkt, handshakes, bssid, client_mac):
     
     f_nonce = b'00'*32
@@ -87,7 +89,10 @@ def decrypt_packet(packet, ptk):
     return getattr(packet, 'data')
 
 def aes_ccm_encrypt(aes_key, nonce, ptext, aad=None):
-    return ptext
+    cipher = AES.new(aes_key, AES.MODE_CCM, nonce=nonce, mac_len=8)
+    if aad is not None: cipher.update(aad)
+    ctext, mac = cipher.encrypt_and_digest(ptext)
+    return ctext, mac
 
 def main_app(essid, file_with_packets, s=None, l=None, password=None):
     cpu_num = cpu_count()
