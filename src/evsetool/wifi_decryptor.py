@@ -86,13 +86,41 @@ def try_password(password, essid, key_data, payload, mic, length):
     return result, pmk, ptk
 
 def decrypt_packet(packet, ptk):
-    return getattr(packet, 'data')
+    ccmp_layer = packet[Dot11CCMP]
+    pn0 = getattr(ccmp_layer, 'PN0')
+    pn1 = getattr(ccmp_layer, 'PN1')
+    iv = [pn1, pn0]
+    if getattr(ccmp_layer, 'ext_iv') == 1:
+        pn2 = getattr(ccmp_layer, 'PN2')
+        pn3 = getattr(ccmp_layer, 'PN3')
+        pn4 = getattr(ccmp_layer, 'PN4')
+        pn5 = getattr(ccmp_layer, 'PN5')
+        iv = [pn5, pn4, pn3, pn2] + iv
+    iv = bytes(iv)
+    iv = (8-len(iv))*b'\x00' + iv
+    print(iv)
+    ccmp_data = getattr(ccmp_layer, 'data')
+    aad = ccmp_data[:8]
+    ctext = ccmp_data[8:-8]
+    mac = ccmp_data[-8:]
+    print("\tptk: %s" % hexlify(ptk))
+    print("\tiv: %s" % hexlify(iv))
+    print("\tctext: %s" % hexlify(ctext))
+    print("\taad: %s" % hexlify(aad))
+    print("\tmac: %s" % hexlify(mac))
+    return aes_ccm_decrypt(ptk, iv, ctext, aad, mac)
 
 def aes_ccm_encrypt(aes_key, nonce, ptext, aad=None):
     cipher = AES.new(aes_key, AES.MODE_CCM, nonce=nonce, mac_len=8)
     if aad is not None: cipher.update(aad)
     ctext, mac = cipher.encrypt_and_digest(ptext)
     return ctext, mac
+
+def aes_ccm_decrypt(aes_key, nonce, ctext, aad, mac):
+    _ptext, _ = aes_ccm_encrypt(aes_key, nonce, ctext, aad)
+    _, _mac = aes_ccm_encrypt(aes_key, nonce, _ptext, aad)
+    #if mac != _mac: raise Exception("failed mac validation")
+    return _ptext
 
 def main_app(essid, file_with_packets, s=None, l=None, password=None):
     cpu_num = cpu_count()

@@ -5,6 +5,36 @@ from scapy.all import *
 import os
 from binascii import hexlify
 
+class CCMPContext():
+    
+    def __init__(self, data, key, nonce, decrypt=False):
+        self.ptext = b""
+        self.ctext = b""
+        self.data = data
+        if not decrypt:
+            self.aad = self.data[:8]
+            self.ptext = self.data[8:]
+        else:
+            self.aad = self.data[:8]
+            self.ctext = self.data[8:-8]
+            self.mac = self.data[-8:]
+        self.key = key
+        self.nonce = nonce
+        self.mac = b""
+
+    def __print__(self):
+        print("Key: %s" % hexlify(self.key))
+        print("Nonce: %s" % hexlify(self.nonce))
+        print("Ptext: %s" % hexlify(self.ptext))
+        print("Ctext: %s" % hexlify(self.ctext))
+        print("aad: %s" % hexlify(self.aad))
+        print("MAC: %s" % hexlify(self.mac))
+
+aes_key = bytes.fromhex("C0C1C2C3C4C5C6C7C8C9CACBCCCDCECF")
+nonce = bytes.fromhex("00000003020100A0A1A2A3A4A5")
+input_data = bytes.fromhex("000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E")
+output_data = bytes.fromhex("0001020304050607588C979A61C663D2F066D0C2C0F989806D5F6B61DAC38417E8D12CFDF926E0")
+
 def prep_websocket_tests():
     
     path = os.path.join('tests', 'cap.pcapng')
@@ -53,17 +83,14 @@ def test_wifi_decryptor_ccm_decryption():
     assert hexlify(ptext) == b'aaaa0300000008060001080006040001d83addeffe9ec0a800b1000000000000c0a80001'
 
 def test_ccm_encrypt_rfc3610_testvector1():
-    aes_key = bytes.fromhex("C0C1C2C3C4C5C6C7C8C9CACBCCCDCECF")
-    nonce = bytes.fromhex("00000003020100A0A1A2A3A4A5")
-    input_data = bytes.fromhex("000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E")
-    aad = input_data[:8]
-    ptext = input_data[8:]
-    print("Key: %s" % hexlify(aes_key))
-    print("Nonce: %s" % hexlify(nonce))
-    print("Ptext: %s" % hexlify(ptext))
-    print("aad: %s" % hexlify(aad))
-    ctext, mac = wifi_decryptor.aes_ccm_encrypt(aes_key, nonce, ptext, aad)
-    print("Ctext: %s" % hexlify(ctext))
-    print("MAC: %s" % hexlify(mac))
-    result = aad + ctext + mac
-    assert hexlify(result) == b"0001020304050607588C979A61C663D2F066D0C2C0F989806D5F6B61DAC38417E8D12CFDF926E0".lower()
+    ccmp = CCMPContext(input_data, aes_key, nonce, decrypt=False)
+    ctext, mac = wifi_decryptor.aes_ccm_encrypt(ccmp.key, ccmp.nonce, ccmp.ptext, ccmp.aad)
+    print(ccmp.__print__())
+    result = ccmp.aad + ctext + mac
+    assert hexlify(result) == hexlify(output_data)
+
+def test_ccm_decrypt_rfc3610_testvector1():
+    ccmp = CCMPContext(output_data, aes_key, nonce, decrypt=True)
+    _ptext = wifi_decryptor.aes_ccm_decrypt(ccmp.key, ccmp.nonce, ccmp.ctext, ccmp.aad, ccmp.mac)
+    print(ccmp.__print__())
+    assert hexlify(input_data[8:]) == hexlify(_ptext)
