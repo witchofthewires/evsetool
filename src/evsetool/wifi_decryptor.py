@@ -83,6 +83,11 @@ def try_password(password, essid, key_data, payload, mic, length):
     ptk = ptk[32:48] # to match wireshark
     return result, pmk, ptk
 
+def decrypt_packet(packet, ptk):
+    return getattr(packet, 'data')
+
+def aes_ccm_encrypt(aes_key, nonce, ptext, aad=None):
+    return ptext
 
 def main_app(essid, file_with_packets, s=None, l=None, password=None):
     cpu_num = cpu_count()

@@ -26,8 +26,8 @@ To install evsetool:
 ```
 git clone https://github.com/witchofthewires/evsetool.git
 cd evsetool
-python -m venv venv
-venv/bin/python -m pip install -r requirements.txt
+make init
+make install
 ```
 
 To install [StEVe](https://github.com/steve-community/steve), an open source CSMS, for purposes of testing:
@@ -39,17 +39,17 @@ sudo docker-compose up -d
 
 Wait about 5 minutes for Docker Compose to bring the StEVE application online, then execute the following:
 ```
-mariadb -u steve --password=changeme -P 3306 --skip-ssl < steve-config.sql
+make init-steve-db
 ```
 
 To run the sniffer, execute the following in the evsetool directory:
 ```
-sudo venv/bin/python evsetool/evsetool.py --sniff -v
+sudo venv/bin/python -m evsetool --sniff -v
 ```
 
 To query the CSMS with a dummy transaction, open a different terminal and execute the following in the same directory:
 ```
-venv/bin/python evsetool/evsetool.py --csms -v
+venv/bin/python -m evsetool --csms -v
 ```
 
 If all goes well, your output should resemble the following.
@@ -57,7 +57,7 @@ If all goes well, your output should resemble the following.
 
 ## Running the tests
 ```
-venv/bin/python -m pytest
+make test
 ```
 
 ## License
