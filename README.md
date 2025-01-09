@@ -63,7 +63,7 @@ make test
 ## Development Roadmap
 - [x] Add roadmap to README
 - [x] Parse OCPP1.6 Core on wired LAN/local loopback
-- [x] Decryptm 802.11 traffic for WPA-PSK key material
+- [x] Decrypt 802.11 traffic for WPA-PSK key material
 - [ ] Combine previous two steps to decrypt and decode OCPP1.6 Wifi traffic on the fly (est. 2025-1-11)
 - [ ] Implement all OCPP1.6 messages/profiles (est. 2025-2-1)
 - [ ] Add attack options (est. 2025-3-1)
