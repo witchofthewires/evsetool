@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from scapy.all import rdpcap, EAPOL, Dot11, Raw, EAPOL_KEY
+from scapy.all import rdpcap, EAPOL, Dot11, Dot11CCMP, Raw, EAPOL_KEY
 from binascii import hexlify, a2b_hex
 from hashlib import pbkdf2_hmac, sha1
 from hmac import new
@@ -80,7 +80,8 @@ def try_password(password, essid, key_data, payload, mic, length):
     print(hexlify(ptk))
     _mic = new(ptk[0:16], payload, sha1).hexdigest()[:32].encode()
     result = password if mic == _mic else None 
-    return result
+    ptk = ptk[32:48] # to match wireshark
+    return result, pmk, ptk
 
 
 def main_app(essid, file_with_packets, s=None, l=None, password=None):
@@ -130,11 +131,12 @@ def main_app(essid, file_with_packets, s=None, l=None, password=None):
         return
 
     key_data, mic, payload = organize(bssid, client_mac, handshakes)
-    result = try_password(password, essid, key_data, payload, mic, length)
+    result, pmk, ptk = try_password(password, essid, key_data, payload, mic, length)
     if result is not None:
         print("Cracked password: %s" % result)
     else:
         print("Failed to crack password")
+    return pmk, ptk
     '''
     loop_func = partial(try_password, essid=essid,
                         key_data=key_data, payload=payload,
@@ -160,4 +162,24 @@ def main_app(essid, file_with_packets, s=None, l=None, password=None):
 if __name__ == "__main__":
     with open(os.path.join('var', 'wificreds.csv')) as fp:
         ssid, password = fp.read().strip().split(',')
-    main_app(ssid, "capture.pcapng", password=password)
+    pmk, ptk = main_app(ssid, "capture.pcapng", password=password)
+    packets = rdpcap("capture.pcapng")
+    for i, p in enumerate(packets[:50]): 
+        print("%d: %s" % (i+1,p))
+        if p.haslayer(Dot11CCMP):
+            layer = p[Dot11CCMP]
+            pn0 = getattr(layer, 'PN0')
+            pn1 = getattr(layer, 'PN1')
+            iv = [pn1, pn0]
+            if getattr(layer, 'ext_iv') == 1:
+                pn2 = getattr(layer, 'PN2')
+                pn3 = getattr(layer, 'PN3')
+                pn4 = getattr(layer, 'PN4')
+                pn5 = getattr(layer, 'PN5')
+                iv = [pn5, pn4, pn3, pn2] + iv
+            iv = bytes(iv)
+            ciphertext = getattr(p[Dot11CCMP], 'data')
+            print("\tpmk: %s" % hexlify(pmk))
+            print("\tptk: %s" % hexlify(ptk))
+            print("\tiv: %s" % hexlify(iv))
+            print("\tctext: %s" % hexlify(ciphertext))
