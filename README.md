@@ -60,6 +60,30 @@ If all goes well, your output should resemble the following.
 make test
 ```
 
+## Development Roadmap
+- [x] Add roadmap to README
+- [x] Parse OCPP1.6 Core on wired LAN/local loopback
+- [x] Decryptm 802.11 traffic for WPA-PSK key material
+- [ ] Combine previous two steps to decrypt and decode OCPP1.6 Wifi traffic on the fly (est. 2025-1-11)
+- [ ] Implement all OCPP1.6 messages/profiles (est. 2025-2-1)
+- [ ] Add attack options (est. 2025-3-1)
+    - [ ] EvilCSMS generic MITM prestage
+    - [ ] Unauthorized start/stop transaction
+    - [ ] Malicious firmware update
+- [ ] Update other projects to support OCPP1.6 protocols (est. 2025-6-1)
+    - [ ] Wireshark
+        - [ ] WebSockets over Wifi/sniffed 802.11
+        - [ ] OCPP1.6
+    - [ ] Scapy
+        - [ ] WebSockets
+        - [ ] Real-time 802.11 WPA-PSK decryption
+        - [ ] OCPP1.6
+- [ ] Implement additional 802.11 support (est 2025-9-1)
+    - [ ] WEP
+    - [ ] WPA3
+
+See the [open issues](https://github.com/othneildrew/Best-README-Template/issues) for a full list of proposed features (and known issues).
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE.md) - see the [LICENSE.md](LICENSE.md) file for
