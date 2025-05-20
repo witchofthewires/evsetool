@@ -13,6 +13,32 @@ from copy import deepcopy as copy
 
 from Crypto.Cipher import AES
 
+class CCMPContext():
+    
+    def __init__(self, data, key, nonce, decrypt=False):
+        self.ptext = b""
+        self.ctext = b""
+        self.mac = b""
+        self.data = data
+        aad = 8 # TODO
+        if not decrypt:
+            self.aad = self.data[:aad]
+            self.ptext = self.data[aad:]
+        else:
+            self.aad = self.data[:aad]
+            self.ctext = self.data[aad:-8]
+            self.mac = self.data[-8:]
+        self.key = key
+        self.nonce = nonce
+
+    def __print__(self):
+        print("Key: %s" % hexlify(self.key))
+        print("Nonce: %s" % hexlify(self.nonce))
+        print("Ptext: %s" % hexlify(self.ptext))
+        print("Ctext: %s" % hexlify(self.ctext))
+        print("aad: %s" % hexlify(self.aad))
+        print("MAC: %s" % hexlify(self.mac))
+
 def check(pkt, handshakes, bssid, client_mac):
     
     f_nonce = b'00'*32
@@ -86,7 +112,9 @@ def try_password(password, essid, key_data, payload, mic, length):
     return result, pmk, ptk
 
 def decrypt_packet(packet, ptk):
+
     ccmp_layer = packet[Dot11CCMP]
+    
     pn0 = getattr(ccmp_layer, 'PN0')
     pn1 = getattr(ccmp_layer, 'PN1')
     iv = [pn1, pn0]
@@ -98,17 +126,12 @@ def decrypt_packet(packet, ptk):
         iv = [pn5, pn4, pn3, pn2] + iv
     iv = bytes(iv)
     iv = (8-len(iv))*b'\x00' + iv
-    print(iv)
+
     ccmp_data = getattr(ccmp_layer, 'data')
-    aad = ccmp_data[:8]
-    ctext = ccmp_data[8:-8]
-    mac = ccmp_data[-8:]
-    print("\tptk: %s" % hexlify(ptk))
-    print("\tiv: %s" % hexlify(iv))
-    print("\tctext: %s" % hexlify(ctext))
-    print("\taad: %s" % hexlify(aad))
-    print("\tmac: %s" % hexlify(mac))
-    return aes_ccm_decrypt(ptk, iv, ctext, aad, mac)
+    ccmp = CCMPContext(ccmp_data, ptk, iv, decrypt=True)
+    print(ccmp_layer.show())
+
+    return aes_ccm_decrypt(ptk, iv, ccmp.ctext, ccmp.aad, ccmp.mac)
 
 def aes_ccm_encrypt(aes_key, nonce, ptext, aad=None):
     cipher = AES.new(aes_key, AES.MODE_CCM, nonce=nonce, mac_len=8)
@@ -119,7 +142,8 @@ def aes_ccm_encrypt(aes_key, nonce, ptext, aad=None):
 def aes_ccm_decrypt(aes_key, nonce, ctext, aad, mac):
     _ptext, _ = aes_ccm_encrypt(aes_key, nonce, ctext, aad)
     _, _mac = aes_ccm_encrypt(aes_key, nonce, _ptext, aad)
-    #if mac != _mac: raise Exception("failed mac validation")
+    #if mac != _mac: 
+    #    raise Exception("Failed mac validation: (expected) %s =/= (calc) %s" % (hexlify(mac), hexlify(_mac)))
     return _ptext
 
 def main_app(essid, file_with_packets, s=None, l=None, password=None):
