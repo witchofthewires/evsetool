@@ -35,6 +35,7 @@ pip install . --force-reinstall
 To run associated tests:
 ```
 python -m pytest -v
+```
 
 #### Linux
 To install:
@@ -43,6 +44,10 @@ git clone https://github.com/witchofthewires/evsetool.git
 cd evsetool
 make init
 make install
+```
+To run associated tests:
+```
+make test
 ```
 
 ### Testing with StEVe
@@ -72,11 +77,6 @@ venv/bin/python -m evsetool --csms -v
 
 If all goes well, your output should resemble the following.
 ![Screenshot showing an example use of the evsetool. There are two terminals. The right terminal interacts with the CSMS server, while the left terminal sniffs and decodes the OCPP traffic.](static/transaction_simflow.png)
-
-## Running the tests
-```
-make test
-```
 
 ## Development Roadmap
 - [x] Add roadmap to README
