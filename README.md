@@ -22,13 +22,31 @@ The tutorial in this section requires the following additional dependencies:
 
 ### Installing
 
-To install evsetool:
+#### Windows
+To install:
+```
+git clone https://github.com/witchofthewires/evsetool.git
+cd evsetool
+python -m venv venv
+venv\Scripts\Activate
+pip install -r requirements.txt
+pip install . --force-reinstall
+```
+To run associated tests:
+```
+python -m pytest -v
+
+#### Linux
+To install:
 ```
 git clone https://github.com/witchofthewires/evsetool.git
 cd evsetool
 make init
 make install
 ```
+
+### Testing with StEVe
+The following instructions apply to Linux environments only.
 
 To install [StEVe](https://github.com/steve-community/steve), an open source CSMS, for purposes of testing:
 ```
