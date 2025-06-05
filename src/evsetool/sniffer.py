@@ -10,7 +10,7 @@ import array
 import zlib
 from websockets import frames
 
-from .utils import *
+from utils import *
 
 http.COMMON_UNSTANDARD_REQUEST_HEADERS.append('Sec-WebSocket-Key')
 
