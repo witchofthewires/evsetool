@@ -50,15 +50,10 @@ async def main():
     logging.basicConfig(level=log_level)
     args = parser.parse_args()
 
-    if args.sniff:
-        log("EVSETOOL::Starting sniffer...")
-        sniffer_main()
-    elif args.pcap:
-        pcap(args.pcap) 
+    if args.sniff: sniff()
+    elif args.pcap: pcap(args.pcap) 
     elif args.csms: await csms(url, id_tag, args.name)
-    elif args.serve:
-        log("EVSETOOL::Serving OCPP1.6 on port %d" % cfg['local_ocpp_port'])
-        asyncio.run(serve_OCPPv16('0.0.0.0', cfg['local_ocpp_port']))
+    elif args.serve: await serve(cfg['local_ocpp_port'])
     elif args.sim:
         log("EVSETOOL::Running sim_diagnostics")
         ip_addr = '127.0.0.1'
@@ -86,15 +81,18 @@ async def interactive():
                 except IndexError:
                     print("csms command requires inputs url, id_tag and evse_name")
                     print("Type 'help' to see a list of possible commands and their inputs")
-            case "serve":
-                pass 
-                #serve()
+            case "serve": 
+                try:
+                    lport = int(user_fields[1])
+                    await serve(lport)
+                except (IndexError, ValueError):
+                    print("sniff command requires integer input lport")
+                    print("Type 'help' to see a list of possible commands and their inputs")
             case "sim": 
                 #sim()
                 pass
-            case "sniff": 
-                #sniff()
-                pass
+            case "sniff":
+                sniff()
             case "pcap":
                 try:
                     filename = user_fields[1]
@@ -142,6 +140,14 @@ async def run_sim(ip_addr, port, id_tag, name):
     loop = asyncio.get_running_loop()
     loop.create_task(serve_OCPPv16(ip_addr, port))
     loop.create_task(simflow_diagnostics(server_url, id_tag, name))
+
+async def serve(lport):
+    log("EVSETOOL::Serving OCPP1.6 on port %d" % lport)
+    await serve_OCPPv16('0.0.0.0', lport)
+
+def sniff():
+    log("EVSETOOL::Starting sniffer...")
+    sniffer_main()
 
 if __name__ == '__main__':
     asyncio.run(main())
