@@ -55,7 +55,7 @@ async def main():
         sniffer_main()
     elif args.pcap:
         pcap(args.pcap) 
-    elif args.csms: csms(url, id_tag, args.name)
+    elif args.csms: await csms(url, id_tag, args.name)
     elif args.serve:
         log("EVSETOOL::Serving OCPP1.6 on port %d" % cfg['local_ocpp_port'])
         asyncio.run(serve_OCPPv16('0.0.0.0', cfg['local_ocpp_port']))
@@ -67,19 +67,25 @@ async def main():
         #sniffer_main()
     elif args.interactive:
         log("EVSETOOL::Entering interactive mode")
-        interactive()
+        await interactive()
     else:
         print("ERROR: Please select one of the following: [csms|sim|sniff|pcap|interactive]")
         print("use --help for more information")
 
-def interactive():
+async def interactive():
     while True:
         user_input = input("evsetool> ")
         user_fields = user_input.split(' ')
         match user_fields[0]:
             case "csms": 
-                print("csms it is")
-                #csms('url', 'id_tag', 'args.name')
+                try:
+                    url = user_fields[1]
+                    id_tag = user_fields[2]
+                    evse_name = user_fields[3]
+                    await csms(url, id_tag, evse_name)
+                except IndexError:
+                    print("csms command requires inputs url, id_tag and evse_name")
+                    print("Type 'help' to see a list of possible commands and their inputs")
             case "serve":
                 pass 
                 #serve()
@@ -93,7 +99,7 @@ def interactive():
                 try:
                     filename = user_fields[1]
                     pcap(filename)
-                except:
+                except IndexError:
                     print("pcap command requires input filename")
                     print("Type 'help' to see a list of possible commands and their inputs")
             case "q":
@@ -110,7 +116,7 @@ def interactive():
 
 def interactive_help():
     print("COMMANDS\n--------")
-    print("csms\n\tsimulate CSMS")
+    print("csms URL ID_TAG EVSE_NAME\n\tsimulate CSMS")
     print("serve\n\tsimulate EVSE client node")
     print("sim\n\tWIP simulation mode")
     print("sniff\n\tlistens on the LAN for OCPP1.6 traffic")
@@ -119,9 +125,9 @@ def interactive_help():
     print("help\n\tdisplay this help message")
     print()
 
-def csms(url, id_tag, name):
+async def csms(url, id_tag, name):
     log("EVSETOOL::Querying CSMS...")
-    asyncio.run(simflow_transaction(url, id_tag, name))
+    await simflow_transaction(url, id_tag, name)
 
 def pcap(filename):
     log("EVSETOOL::Reading pcap <%s>..." % filename)
