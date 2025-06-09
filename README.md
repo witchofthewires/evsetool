@@ -28,7 +28,7 @@ To install:
 git clone https://github.com/witchofthewires/evsetool.git
 cd evsetool
 python -m venv venv
-venv\Scripts\Activate
+.\venv\Scripts\activate
 pip install -r requirements.txt
 pip install . --force-reinstall
 ```

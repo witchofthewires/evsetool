@@ -7,7 +7,7 @@ from ocpp.routing import on
 from ocpp.v16 import ChargePoint as cp
 from ocpp.v16 import call_result, datatypes, enums
 
-from utils import *
+from .utils import *
 
 #from ocpp.v201 import ChargePoint as cp
 #from ocpp.v201 import call_result

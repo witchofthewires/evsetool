@@ -5,10 +5,10 @@ import yaml
 import scapy
 import time
 
-from sniffer import parse, main as sniffer_main
-from evse import simflow_transaction, simflow_diagnostics
-from csms import serve_OCPPv16
-from utils import *
+from .sniffer import parse, main as sniffer_main
+from .evse import simflow_transaction, simflow_diagnostics
+from .csms import serve_OCPPv16
+from .utils import *
 
 async def main():
     parser = argparse.ArgumentParser(description='EVSE Red Team Tool')
