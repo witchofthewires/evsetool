@@ -1,6 +1,6 @@
 [project]
 name = "evsetool"
-version = "0.1.3"
+version = "0.1.4"
 authors = [
   { name="Danielle McGuire", email="dcm678@gmail.com" },
 ]
