@@ -10,6 +10,10 @@ from .evse import simflow_transaction, simflow_diagnostics
 from .csms import serve_OCPPv16
 from .utils import *
 
+DEFAULT_ID_TAG = "01234567890123456789"
+DEFAULT_URL = "ws://127.0.0.1:8180/steve/websocket/CentralSystemService"
+DEFAULT_LOCAL_OCPP_PORT = 9000
+
 async def main():
     parser = argparse.ArgumentParser(description='EVSE Red Team Tool')
     parser.add_argument('-v', '--verbose', action='store_true',
@@ -40,12 +44,19 @@ async def main():
                     help='Interactive execution mode')
     args = parser.parse_args()
 
+    url = DEFAULT_URL
+    id_tag = DEFAULT_ID_TAG
+    local_ocpp_port = DEFAULT_LOCAL_OCPP_PORT
     args.file = './default.config.yaml' if not args.file else args.file
-    with open(args.file) as f:
-        cfg = yaml.load(f, Loader=yaml.FullLoader)
-                        
-    url = cfg['url'] if args.url is None else args.url
-    id_tag = cfg['id_tag'] if args.evse_id is None else args.evse_id
+    try:
+        with open(args.file) as f:
+            cfg = yaml.load(f, Loader=yaml.FullLoader)
+            url = cfg['url'] if args.url is None else args.url
+            id_tag = cfg['id_tag'] if args.evse_id is None else args.evse_id
+            local_ocpp_port = cfg['local_ocpp_port'] # TODO add command-line option
+    except FileNotFoundError:            
+        pass
+
     log_level = logging.INFO if args.verbose else logging.ERROR
     logging.basicConfig(level=log_level)
     args = parser.parse_args()
@@ -53,11 +64,11 @@ async def main():
     if args.sniff: sniff()
     elif args.pcap: pcap(args.pcap) 
     elif args.csms: await csms(url, id_tag, args.name)
-    elif args.serve: await serve(cfg['local_ocpp_port'])
+    elif args.serve: await serve(local_ocpp_port)
     elif args.sim:
         log("EVSETOOL::Running sim_diagnostics")
         ip_addr = '127.0.0.1'
-        port = cfg['local_ocpp_port']
+        port = local_ocpp_port
         await run_sim(ip_addr, port, id_tag, args.name)
         #sniffer_main()
     elif args.interactive:

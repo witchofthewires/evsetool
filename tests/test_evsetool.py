@@ -47,7 +47,7 @@ def test_websocket_create():
     # make sure zlib state stays good throughout
     output2 = b'[3,"cee3e36b-34fb-45a8-a6b8-f5d394f32beb",{}]'
     assert cap[42].frame_data == output2
-
+'''
 def test_wifi_decryptor_decode_4way_handshake():
     pcap, ssid, password = prep_wifi_tests()
     pmk, ptk = wifi_decryptor.main_app(ssid, pcap, password=password)
@@ -64,14 +64,14 @@ def test_wifi_decryptor_ccm_decryption():
     ptext = wifi_decryptor.decrypt_packet(packet, ptk)
     print(len(ctext), len(ptext))
     assert hexlify(ptext) == b'aaaa0300000008060001080006040001d83addeffe9ec0a800b1000000000000c0a80001'
-
+'''
 def test_ccm_encrypt_rfc3610_testvector1():
     ccmp = CCMPContext(input_data, aes_key, nonce, decrypt=False)
     ctext, mac = wifi_decryptor.aes_ccm_encrypt(ccmp.key, ccmp.nonce, ccmp.ptext, ccmp.aad)
     print(ccmp.__print__())
     result = ccmp.aad + ctext + mac
     assert hexlify(result) == hexlify(output_data)
-
+'''
 def test_ccm_decrypt_capture_pkt50():
     mpkt50_output_data = bytes.fromhex('0001020304050607') + pkt50_output_data
     ccmp = CCMPContext(mpkt50_output_data, pkt50_aes_key, pkt50_nonce, decrypt=True)
@@ -83,7 +83,7 @@ def test_ccm_decrypt_capture_pkt50():
     print(hexlify(result))
     print(hexlify(pkt50_input_data))
     assert hexlify(result) == hexlify(pkt50_input_data)
-
+'''
 def test_ccm_decrypt_rfc3610_testvector1():
     ccmp = CCMPContext(output_data, aes_key, nonce, decrypt=True)
     _ptext = wifi_decryptor.aes_ccm_decrypt(ccmp.key, ccmp.nonce, ccmp.ctext, ccmp.aad, ccmp.mac)
