@@ -37,6 +37,11 @@ def prep_wifi_tests():
         ssid, password = fp.read().strip().split(',')
     return pcap, ssid, password
 
+# make sure zlib state stays good throughout
+def test_zlib_state():
+    cap = prep_websocket_tests()
+    output = b'[3,"cee3e36b-34fb-45a8-a6b8-f5d394f32beb",{}]'
+    assert cap[42].frame_data == output 
 
 def test_websocket_create():
     cap = prep_websocket_tests()
@@ -44,9 +49,6 @@ def test_websocket_create():
     output = b'[3,"bad9a3f6-ca80-4901-bb76-9034b8900b5b",{"status":"Accepted","currentTime":"2024-12-12T12:14:42.958Z","interval":14400}]'
     assert cap[24].frame_data == output
 
-    # make sure zlib state stays good throughout
-    output2 = b'[3,"cee3e36b-34fb-45a8-a6b8-f5d394f32beb",{}]'
-    assert cap[42].frame_data == output2
 '''
 def test_wifi_decryptor_decode_4way_handshake():
     pcap, ssid, password = prep_wifi_tests()
