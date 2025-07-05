@@ -1,5 +1,6 @@
 import datetime
 
+# TODO remove in favor of actual logging
 def log(msg):
     print("[*] %s - %s" % (rightnow(), msg))
 

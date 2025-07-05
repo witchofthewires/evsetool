@@ -18,6 +18,8 @@ async def main():
     parser = argparse.ArgumentParser(description='EVSE Red Team Tool')
     parser.add_argument('-v', '--verbose', action='store_true',
                     help='Show full OCPP traffic output')
+    parser.add_argument('-vv', '--verbose-debug', action='store_true',
+                    help='Show debug logs')
     parser.add_argument('-f', '--file', type=str,
                     help='Path to YAML configuration file')
     parser.add_argument('--sniff', action='store_true',
@@ -57,22 +59,27 @@ async def main():
     except FileNotFoundError:            
         pass
 
-    log_level = logging.INFO if args.verbose else logging.ERROR
+    log_level = logging.ERROR
+    if args.verbose_debug: log_level = logging.DEBUG
+    elif args.verbose: log_level = logging.INFO
     logging.basicConfig(level=log_level)
+    
     args = parser.parse_args()
+    for k, v in args.__dict__.items():
+        logging.debug(f"Argument '{k}': '{v}'")
 
     if args.sniff: sniff()
     elif args.pcap: pcap(args.pcap) 
     elif args.csms: await csms(url, id_tag, args.name)
     elif args.serve: await serve(local_ocpp_port)
     elif args.sim:
-        log("EVSETOOL::Running sim_diagnostics")
+        logging.info("EVSETOOL::Running sim_diagnostics")
         ip_addr = '127.0.0.1'
         port = local_ocpp_port
         await run_sim(ip_addr, port, id_tag, args.name)
         #sniffer_main()
     elif args.interactive:
-        log("EVSETOOL::Entering interactive mode")
+        logging.info("EVSETOOL::Entering interactive mode")
         await interactive()
     else:
         print("ERROR: Please select one of the following: [csms|sim|sniff|pcap|interactive]")
@@ -137,29 +144,28 @@ def interactive_help():
     print()
 
 async def csms(url, id_tag, name):
-    log("EVSETOOL::Querying CSMS...")
+    logging.info("EVSETOOL::Querying CSMS")
     await simflow_transaction(url, id_tag, name)
 
 def pcap(filename):
-    log("EVSETOOL::Reading pcap <%s>..." % filename)
+    logging.info(f"EVSETOOL::Reading pcap '{filename}'")
     pkt = scapy.all.rdpcap(filename)
     for p in map(parse, pkt): 
         if p is not None: print(p)        
 
 async def run_sim(ip_addr, port, id_tag, name):
-    log('ere')
+    logging.info('Initiating simulation')
     server_url = 'ws://%s:%s' % (ip_addr, port)
-    
     loop = asyncio.get_running_loop()
     loop.create_task(serve_OCPPv16(ip_addr, port))
     loop.create_task(simflow_diagnostics(server_url, id_tag, name))
 
 async def serve(lport):
-    log("EVSETOOL::Serving OCPP1.6 on port %d" % lport)
+    logging.info("EVSETOOL::Serving OCPP1.6 on port %d" % lport)
     await serve_OCPPv16('0.0.0.0', lport)
 
 def sniff():
-    log("EVSETOOL::Starting sniffer...")
+    logging.info("EVSETOOL::Starting sniffer...")
     sniffer_main()
 
 if __name__ == '__main__':
