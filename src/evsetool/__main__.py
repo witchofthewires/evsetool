@@ -62,24 +62,26 @@ async def main():
     log_level = logging.ERROR
     if args.verbose_debug: log_level = logging.DEBUG
     elif args.verbose: log_level = logging.INFO
-    logging.basicConfig(level=log_level)
-    
+
+    global logger
+    logger = logging_setup(__name__, log_level=log_level)
+    logger.info(f"Initialized logger '{__name__}'")
     args = parser.parse_args()
     for k, v in args.__dict__.items():
-        logging.debug(f"Argument '{k}': '{v}'")
+        logger.debug(f"Argument '{k}': '{v}'")
 
     if args.sniff: sniff()
     elif args.pcap: pcap(args.pcap) 
     elif args.csms: await csms(url, id_tag, args.name)
     elif args.serve: await serve(local_ocpp_port)
     elif args.sim:
-        logging.info("EVSETOOL::Running sim_diagnostics")
+        logger.info("EVSETOOL::Running sim_diagnostics")
         ip_addr = '127.0.0.1'
         port = local_ocpp_port
         await run_sim(ip_addr, port, id_tag, args.name)
         #sniffer_main()
     elif args.interactive:
-        logging.info("EVSETOOL::Entering interactive mode")
+        logger.info("EVSETOOL::Entering interactive mode")
         await interactive()
     else:
         print("ERROR: Please select one of the following: [csms|sim|sniff|pcap|interactive]")
@@ -144,28 +146,28 @@ def interactive_help():
     print()
 
 async def csms(url, id_tag, name):
-    logging.info("EVSETOOL::Querying CSMS")
+    logger.info("EVSETOOL::Querying CSMS")
     await simflow_transaction(url, id_tag, name)
 
 def pcap(filename):
-    logging.info(f"EVSETOOL::Reading pcap '{filename}'")
+    logger.info(f"EVSETOOL::Reading pcap '{filename}'")
     pkt = scapy.all.rdpcap(filename)
     for p in map(parse, pkt): 
         if p is not None: print(p)        
 
 async def run_sim(ip_addr, port, id_tag, name):
-    logging.info('Initiating simulation')
+    logger.info('Initiating simulation')
     server_url = 'ws://%s:%s' % (ip_addr, port)
     loop = asyncio.get_running_loop()
     loop.create_task(serve_OCPPv16(ip_addr, port))
     loop.create_task(simflow_diagnostics(server_url, id_tag, name))
 
 async def serve(lport):
-    logging.info("EVSETOOL::Serving OCPP1.6 on port %d" % lport)
+    logger.info("EVSETOOL::Serving OCPP1.6 on port %d" % lport)
     await serve_OCPPv16('0.0.0.0', lport)
 
 def sniff():
-    logging.info("EVSETOOL::Starting sniffer...")
+    logger.info("EVSETOOL::Starting sniffer...")
     sniffer_main()
 
 if __name__ == '__main__':
