@@ -17,6 +17,8 @@ from ocpp.v16 import ChargePoint as cp
 
 from .utils import *
 
+logger = logging_setup(__name__, logging.DEBUG)
+
 class OCPPv16ChargePoint(cp):
 
     def __init__(self, *args, **kwargs):
@@ -30,32 +32,32 @@ class OCPPv16ChargePoint(cp):
 
     def _update_cache(self, val):
         self.authorization_cache.add(val)
-        log("Authorization Cache: %s" % self.authorization_cache)
+        logger.info("Authorization Cache: %s" % self.authorization_cache)
 
     async def boot_notification(self):
         req = call.BootNotification(charge_point_model=self.model, charge_point_vendor=self.vendor)
         res = await self.call(req)
-        log("sent BootNotification for %s %s" % (self.vendor, self.model))
+        logger.info("sent BootNotification for %s %s" % (self.vendor, self.model))
 
     async def authorize(self, id_tag):
         req = call.Authorize(id_tag)
         res = await self.call(req)
         if res.id_tag_info['status'] == 'Accepted': 
-            log("Authorized with tag <%s>" % id_tag)
+            logger.info("Authorized with tag <%s>" % id_tag)
             self._update_cache(id_tag)
         else:
             # TODO raise exception
-            log("Failed to authorize with id_tag <%s>" % id_tag)
+            logger.error("Failed to authorize with id_tag <%s>" % id_tag)
 
     async def diagnostics_status_notification(self, msg):
         req = call.DiagnosticsStatusNotification(msg)
         res = await self.call(req)
-        log("Sent DiagnosticStatusNotification <%s>" % msg)
+        logger.info("Sent DiagnosticStatusNotification <%s>" % msg)
 
     async def firmware_status_notification(self, msg):
         req = call.FirmwareStatusNotification(msg)
         res = await self.call(req)
-        log("Sent FirmwareStatusNotification <%s>" % msg)
+        logger.info("Sent FirmwareStatusNotification <%s>" % msg)
 
     async def heartbeat(self):
         req = call.Heartbeat()
@@ -69,23 +71,23 @@ class OCPPv16ChargePoint(cp):
     async def data_transfer(self, vendor_id, message_id, data=None):
         req = call.DataTransfer(vendor_id, message_id, data)
         res = await self.call(req)
-        log("Sent DataTransfer message successfully")
+        logger.info("Sent DataTransfer message successfully")
 
     async def meter_values(self, connector_id, meter_values, transaction_id=None):
         req = call.MeterValues(connector_id, meter_values, transaction_id)
         res = await self.call(req)
-        log("Sent MeterValues successfully")
+        logger.info("Sent MeterValues successfully")
 
     async def start_transaction(self, connector_id, id_tag, meter_start, timestamp, reservation_id=None):
         req = call.StartTransaction(connector_id, id_tag, meter_start, timestamp, reservation_id=reservation_id)
         res = await self.call(req)
         self.transactions.append(res.transaction_id)
         if res.id_tag_info['status'] == 'Accepted': 
-            log("CSMS accepted StartTransaction")
+            logger.info("CSMS accepted StartTransaction")
             self._update_cache(id_tag)
         else:
             # TODO raise exception
-            log("CSMS denied StartTransaction")
+            logger.error("CSMS denied StartTransaction")
 
     async def status_notification(self, 
                                   connector_id, 
@@ -103,18 +105,18 @@ class OCPPv16ChargePoint(cp):
                                       vendor_id, 
                                       vendor_error_code)
         req = await self.call(req)
-        log("StatusNotification successful")
+        logger.info("StatusNotification successful")
 
     async def stop_transaction(self, id_tag, meter_stop, timestamp, transaction_id, reason=None, transaction_data=None):
         if transaction_id is None: transaction_id=0 # TODO fix this
         req = call.StopTransaction(meter_stop, timestamp, transaction_id, reason, id_tag, transaction_data)
         res = await self.call(req)
         if res.id_tag_info['status'] == 'Accepted': 
-            log("CSMS accepted StopTransaction")
+            logger.info("CSMS accepted StopTransaction")
             self._update_cache(id_tag)
         else:
             # TODO raise exception
-            log("CSMS denied StopTransaction")
+            logger.error("CSMS denied StopTransaction")
 
 async def simflow_diagnostics(url, id_tag, name = None):
     if name is None: name = "CP_1"
