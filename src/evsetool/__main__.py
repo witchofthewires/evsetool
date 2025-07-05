@@ -111,6 +111,8 @@ async def interactive():
                 except IndexError:
                     print("pcap command requires input filename")
                     print("Type 'help' to see a list of possible commands and their inputs")
+                except FileNotFoundError:
+                    print(f"Failed to open file '{filename}': file not found")
             case "q":
                 return
             case "quit":
