@@ -22,6 +22,17 @@ The tutorial in this section requires the following additional dependencies:
 
 ### Installing
 
+#### Docker
+Build the image:
+```
+docker build -t evsetool . --no-cache
+```
+
+Run the container and enter into interactive mode:
+```
+docker run -it evsetool
+```
+
 #### Windows
 To install:
 ```
