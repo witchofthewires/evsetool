@@ -93,13 +93,16 @@ If all goes well, your output should resemble the following.
 - [x] Add roadmap to README
 - [x] Parse OCPP1.6 Core on wired LAN/local loopback
 - [x] Decrypt 802.11 traffic for WPA-PSK key material
-- [ ] Combine previous two steps to decrypt and decode OCPP1.6 Wifi traffic on the fly (est. 2025-1-11)
-- [ ] Implement all OCPP1.6 messages/profiles (est. 2025-2-1)
-- [ ] Add attack options (est. 2025-3-1)
+- [ ] Combine previous two steps to decrypt and decode OCPP1.6 Wifi traffic on the fly (TABLED)
+- [x] Add interactive CLI option
+- [x] Add Docker support
+- [x] Support pip deployment
+- [ ] Implement all OCPP1.6 messages/profiles (est. 2025-7-10)
+- [ ] Add attack options (TABLED)
     - [ ] EvilCSMS generic MITM prestage
     - [ ] Unauthorized start/stop transaction
     - [ ] Malicious firmware update
-- [ ] Update other projects to support OCPP1.6 protocols (est. 2025-6-1)
+- [ ] Update other projects to support OCPP1.6 protocols (est. 2025-12-31)
     - [ ] Wireshark
         - [ ] WebSockets over Wifi/sniffed 802.11
         - [ ] OCPP1.6
@@ -107,7 +110,7 @@ If all goes well, your output should resemble the following.
         - [ ] WebSockets
         - [ ] Real-time 802.11 WPA-PSK decryption
         - [ ] OCPP1.6
-- [ ] Implement additional 802.11 support (est 2025-9-1)
+- [ ] Implement additional 802.11 support (est 2025-12-31)
     - [ ] WEP
     - [ ] WPA3
 
