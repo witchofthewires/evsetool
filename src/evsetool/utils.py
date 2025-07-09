@@ -17,7 +17,8 @@ def logging_setup(logger_name, log_level=logging.ERROR, filename='evsetool.log')
 
     logger.addHandler(fh)
     logger.addHandler(ch)
-    logger.info(f"Initialized console log handler at severity '{log_level}'")
+    log_level_str  = logging.getLevelName(log_level)
+    logger.info(f"Initialized console log handler at severity '{log_level_str}'")
 
     return logger
 
