@@ -26,7 +26,7 @@ async def main():
                     help='Listen passively for OCPP1.6 traffic over TCP 8180')
     parser.add_argument('--serve', action="store_true",
                     help='Serves OCPP1.6 on $local_ocpp_port')
-    parser.add_argument('--csms', action='store_true',
+    parser.add_argument('--query', action='store_true',
                     help='Interact with CSMS in role of EVSE')
     parser.add_argument('--url', type=str,
                     help='Address of system to query')
@@ -72,7 +72,7 @@ async def main():
 
     if args.sniff: sniff()
     elif args.pcap: pcap(args.pcap) 
-    elif args.csms: await csms(url, id_tag, args.name)
+    elif args.query: await query(url, id_tag, args.name)
     elif args.serve: await serve(local_ocpp_port)
     elif args.sim:
         logger.info("EVSETOOL::Running sim_diagnostics")
@@ -84,7 +84,7 @@ async def main():
         logger.info("EVSETOOL::Entering interactive mode")
         await interactive()
     else:
-        print("ERROR: Please select one of the following: [csms|sim|sniff|pcap|interactive]")
+        print("ERROR: Please select one of the following: [query|sim|sniff|pcap|interactive]")
         print("use --help for more information")
 
 async def interactive():
@@ -92,21 +92,21 @@ async def interactive():
         user_input = input("evsetool> ")
         user_fields = user_input.split(' ')
         match user_fields[0]:
-            case "csms": 
+            case "query": 
                 try:
                     url = user_fields[1]
                     id_tag = user_fields[2]
                     evse_name = user_fields[3]
-                    await csms(url, id_tag, evse_name)
+                    await query(url, id_tag, evse_name)
                 except IndexError:
-                    print("csms command requires inputs url, id_tag and evse_name")
+                    print("query command requires inputs url, id_tag and evse_name")
                     print("Type 'help' to see a list of possible commands and their inputs")
             case "serve": 
                 try:
                     lport = int(user_fields[1])
                     await serve(lport)
                 except (IndexError, ValueError):
-                    print("sniff command requires integer input lport")
+                    print("serve command requires integer input lport")
                     print("Type 'help' to see a list of possible commands and their inputs")
             case "sim": 
                 #sim()
@@ -136,8 +136,8 @@ async def interactive():
 
 def interactive_help():
     print("COMMANDS\n--------")
-    print("csms URL ID_TAG EVSE_NAME\n\tsimulate CSMS")
-    print("serve\n\tsimulate EVSE client node")
+    print("query URL ID_TAG EVSE_NAME\n\tquery remote OCPP1.6 server")
+    print("serve LPORT\n\tserve OCPP1.6 traffic on local port")
     print("sim\n\tWIP simulation mode")
     print("sniff\n\tlistens on the LAN for OCPP1.6 traffic")
     print("pcap FILENAME\n\tparse pcap, pcapng input file")
@@ -145,7 +145,7 @@ def interactive_help():
     print("help\n\tdisplay this help message")
     print()
 
-async def csms(url, id_tag, name):
+async def query(url, id_tag, name):
     logger.info("EVSETOOL::Querying CSMS")
     await simflow_transaction(url, id_tag, name)
 
