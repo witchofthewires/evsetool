@@ -5,6 +5,7 @@ import yaml
 import scapy
 import time
 import websockets
+import multiprocessing 
 
 from .sniffer import parse, main as sniffer_main
 from .evse import simflow_transaction, simflow_diagnostics
@@ -171,8 +172,28 @@ async def serve(lport):
     await serve_OCPPv16('0.0.0.0', lport)
 
 def sniff():
-    logger.info("EVSETOOL::Starting sniffer...")
-    sniffer_main()
+    logger.info("Starting sniffer...")
+    
+    ifaces = scapy.interfaces.get_if_list()
+    logger.debug(f"Found ifaces: {ifaces}")
+    procs = []
+    for iface in ifaces:
+        try:
+            proc = multiprocessing.Process(target=sniffer_main, args=(iface,))
+            proc.start()
+            logger.info(f"Now sniffing traffic on iface '{iface}'")
+            procs.append(proc)
+        except KeyboardInterrupt:
+            logger.info("exiting here")
+
+    proc_states = {proc: proc.is_alive() for proc in procs}
+    while True:
+        for proc in procs: 
+            cur_state = proc.is_alive()
+            if proc.is_alive() != proc_states[proc]:
+                logger.info(f"Sniffer process '{proc}' has changed state: is_alive={cur_state}")
+                proc_states[proc] = cur_state
+        time.sleep(3)
 
 if __name__ == '__main__':
     try:

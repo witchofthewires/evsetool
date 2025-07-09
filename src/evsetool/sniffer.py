@@ -9,6 +9,7 @@ import re
 import datetime
 import array
 import zlib
+import sys
 from websockets import frames
 
 from .utils import *
@@ -152,11 +153,11 @@ def parse(pkt):
         if b'HTTP' in pkt[Raw].load: 
             print('%s %s\t%s' % (net_str, http_str, http.HTTPRequest(pkt[Raw].load)))
 
-def main(iface="lo"):
-    for iface in scapy.interfaces.get_if_list():
-        logger.info(f"Now sniffing traffic on iface '{iface}'")
-        sniff(iface=iface, filter="port 8180", prn=parse, store=False)
-    #sniff(iface=iface, filter="port 8180", prn=parse, store=False)
+def main(iface='lo'):
+    sniff(iface=iface, filter="port 8180", prn=parse, store=False)
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        logger.info(f"{sys.argv[0]} received keyboard interrupt, exiting.")
