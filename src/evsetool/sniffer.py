@@ -147,11 +147,11 @@ def parse(pkt):
     net_str = pkt.sprintf("%IP.src%:%IP.sport%->%IP.dst%:%IP.dport% ") + ws_str
     if ws_str != "": 
         data = pkt[SrcWebSocket].frame_data if pkt.haslayer(SrcWebSocket) else pkt[DstWebSocket].frame_data
-        print('%s\t%s' % (net_str, data))
+        logger.info('SNIFFED: %s\t%s' % (net_str, data))
     http_str = "HTTP"
     if pkt.haslayer(Raw):
         if b'HTTP' in pkt[Raw].load: 
-            print('%s %s\t%s' % (net_str, http_str, http.HTTPRequest(pkt[Raw].load)))
+            logger.info('SNIFFED: %s %s\t%s' % (net_str, http_str, http.HTTPRequest(pkt[Raw].load)))
 
 def main(iface='lo'):
     sniff(iface=iface, filter="port 8180", prn=parse, store=False)

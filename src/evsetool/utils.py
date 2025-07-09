@@ -11,7 +11,7 @@ def logging_setup(logger_name, log_level=logging.ERROR, filename='evsetool.log')
     ch = logging.StreamHandler()
     ch.setLevel(log_level)
 
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('%(asctime)s [%(process)d] [%(name)s] [%(funcName)s] [%(levelname)s] %(message)s')
     fh.setFormatter(formatter)
     ch.setFormatter(formatter)
 
