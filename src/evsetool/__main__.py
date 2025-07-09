@@ -7,7 +7,7 @@ import time
 import websockets
 import multiprocessing 
 
-from .sniffer import parse, main as sniffer_main
+from .sniffer import main as sniffer_main
 from .evse import simflow_transaction, simflow_diagnostics
 from .csms import serve_OCPPv16
 from .utils import *
@@ -26,6 +26,8 @@ async def main():
                     help='Path to YAML configuration file')
     parser.add_argument('--sniff', action='store_true',
                     help='Listen passively for OCPP1.6 traffic over TCP 8180')
+    parser.add_argument('--log_sniffed', action='store_true',
+                    help='If true, sniffed traffic is passed to logging handler; if false, sent directly to stdout')
     parser.add_argument('--serve', action="store_true",
                     help='Serves OCPP1.6 on $local_ocpp_port')
     parser.add_argument('--query', action='store_true',
@@ -72,7 +74,9 @@ async def main():
     for k, v in args.__dict__.items():
         logger.debug(f"Argument '{k}': '{v}'")
 
-    if args.sniff: sniff()
+
+    log_sniffed = False if not args.log_sniffed else True
+    if args.sniff: sniff(log_sniffed)
     elif args.pcap: pcap(args.pcap) 
     elif args.query: await query(url, id_tag, args.name)
     elif args.serve: await serve(local_ocpp_port)
@@ -171,7 +175,7 @@ async def serve(lport):
     logger.info("EVSETOOL::Serving OCPP1.6 on port %d" % lport)
     await serve_OCPPv16('0.0.0.0', lport)
 
-def sniff():
+def sniff(log_sniffed=False):
     logger.info("Starting sniffer...")
     
     ifaces = scapy.interfaces.get_if_list()
@@ -179,7 +183,7 @@ def sniff():
     procs = []
     for iface in ifaces:
         try:
-            proc = multiprocessing.Process(target=sniffer_main, args=(iface,))
+            proc = multiprocessing.Process(target=sniffer_main, args=(iface,log_sniffed,))
             proc.start()
             logger.info(f"Now sniffing traffic on iface '{iface}'")
             procs.append(proc)

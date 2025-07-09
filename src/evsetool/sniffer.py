@@ -141,7 +141,7 @@ class DstWebSocket(Packet):
 bind_layers(TCP, SrcWebSocket, dport=8180)
 bind_layers(TCP, DstWebSocket, sport=8180)
 
-def parse(pkt):
+def parse_and_log(pkt):
     
     ws_str = "WebSocket" if (pkt.haslayer(SrcWebSocket) or pkt.haslayer(DstWebSocket)) else ""
     net_str = pkt.sprintf("%IP.src%:%IP.sport%->%IP.dst%:%IP.dport% ") + ws_str
@@ -153,8 +153,23 @@ def parse(pkt):
         if b'HTTP' in pkt[Raw].load: 
             logger.info('SNIFFED: %s %s\t%s' % (net_str, http_str, http.HTTPRequest(pkt[Raw].load)))
 
-def main(iface='lo'):
-    sniff(iface=iface, filter="port 8180", prn=parse, store=False)
+def parse_and_print(pkt):
+    
+    ws_str = "WebSocket" if (pkt.haslayer(SrcWebSocket) or pkt.haslayer(DstWebSocket)) else ""
+    net_str = pkt.sprintf("%IP.src%:%IP.sport%->%IP.dst%:%IP.dport% ") + ws_str
+    if ws_str != "": 
+        data = pkt[SrcWebSocket].frame_data if pkt.haslayer(SrcWebSocket) else pkt[DstWebSocket].frame_data
+        print('SNIFFED: %s\t%s' % (net_str, data))
+    http_str = "HTTP"
+    if pkt.haslayer(Raw):
+        if b'HTTP' in pkt[Raw].load: 
+            print('SNIFFED: %s %s\t%s' % (net_str, http_str, http.HTTPRequest(pkt[Raw].load)))
+
+
+def main(iface='lo', log_sniffed_packets=False):
+    parse_func = parse_and_log if log_sniffed_packets else parse_and_print
+    logger.debug(f"Initiating sniffer with parse_func={parse_func}")
+    sniff(iface=iface, filter="port 8180", prn=parse_func, store=False)
 
 if __name__ == '__main__':
     try:
