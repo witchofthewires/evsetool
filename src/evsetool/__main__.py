@@ -4,6 +4,7 @@ import asyncio
 import yaml
 import scapy
 import time
+import websockets
 
 from .sniffer import parse, main as sniffer_main
 from .evse import simflow_transaction, simflow_diagnostics
@@ -146,8 +147,11 @@ def interactive_help():
     print()
 
 async def query(url, id_tag, name):
-    logger.info("EVSETOOL::Querying CSMS")
-    await simflow_transaction(url, id_tag, name)
+    logger.info(f"Querying '{url}' with id_tag '{id_tag}' and evse_name '{name}'")
+    try:
+        await simflow_transaction(url, id_tag, name)
+    except websockets.exceptions.InvalidStatus as e:
+        logger.error(f'Query failed: {e}')
 
 def pcap(filename):
     logger.info(f"EVSETOOL::Reading pcap '{filename}'")
