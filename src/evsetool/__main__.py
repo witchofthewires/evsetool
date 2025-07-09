@@ -204,3 +204,8 @@ if __name__ == '__main__':
         asyncio.run(main())
     except KeyboardInterrupt:
         logger.info("Received keyboard interrupt, exiting.")
+        for child in multiprocessing.active_children():
+            logger.debug(f'Killing child process with PID {child.pid}')
+            child.kill()
+            logger.debug(f'Successfully terminated child process')
+
