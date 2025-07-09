@@ -17,7 +17,7 @@ from ocpp.v16 import ChargePoint as cp
 
 from .utils import *
 
-logger = logging_setup(__name__, logging.DEBUG)
+logger = logging_setup(__name__, logging.INFO)
 
 class OCPPv16ChargePoint(cp):
 

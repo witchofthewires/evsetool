@@ -13,7 +13,7 @@ from .utils import *
 #from ocpp.v201 import call_result
 #from ocpp.v201.enums import RegistrationStatusType
 
-logger = logging_setup(__name__, logging.DEBUG)
+logger = logging_setup(__name__, logging.INFO)
 
 class OCPPv16Handler(cp):
 

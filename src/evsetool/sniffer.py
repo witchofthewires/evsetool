@@ -14,7 +14,7 @@ from websockets import frames
 
 from .utils import *
 
-logger = logging_setup(__name__, logging.DEBUG)
+logger = logging_setup(__name__, logging.INFO)
 
 http.COMMON_UNSTANDARD_REQUEST_HEADERS.append('Sec-WebSocket-Key')
 
