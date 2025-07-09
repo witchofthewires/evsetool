@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import scapy
 from scapy.all import sniff
 from scapy.packet import *
 from scapy.fields import *
@@ -11,6 +12,8 @@ import zlib
 from websockets import frames
 
 from .utils import *
+
+logger = logging_setup(__name__, logging.DEBUG)
 
 http.COMMON_UNSTANDARD_REQUEST_HEADERS.append('Sec-WebSocket-Key')
 
@@ -149,8 +152,11 @@ def parse(pkt):
         if b'HTTP' in pkt[Raw].load: 
             print('%s %s\t%s' % (net_str, http_str, http.HTTPRequest(pkt[Raw].load)))
 
-def main():
-    sniff(iface="lo", filter="port 8180", prn=parse, store=False)
+def main(iface="lo"):
+    for iface in scapy.interfaces.get_if_list():
+        logger.info(f"Now sniffing traffic on iface '{iface}'")
+        sniff(iface=iface, filter="port 8180", prn=parse, store=False)
+    #sniff(iface=iface, filter="port 8180", prn=parse, store=False)
 
 if __name__ == '__main__':
     main()
